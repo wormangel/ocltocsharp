@@ -1,0 +1,46 @@
+import java_cup.runtime.*;
+
+
+/* Terminais (tokens vindos do lexer) */
+terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDING, EXCLUDING, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
+terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
+terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR, ID, STRING, NUMBER, TRUE, FALSE, SET, BAG, SEQUENCE, COLLECTION;
+
+
+/* Não terminais */
+non terminal            OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
+non terminal			OperationName, FormalParameters,  ReturnType, TypeIDifier, FormalParameter, TypeSpecifier,CollectionType, CollectionKind;
+non terminal 			SimpleTypeSpecifier, PathName;
+
+/* Regras */
+// Regra Inicial
+start with OCLConstraints;
+// Regras para constraints
+OCLConstraints ::= Constraint OCLConstraints | Constraint;
+Constraint ::= ContextDeclaration ContextBody;
+ContextDeclaration ::= CONTEXT OperationContext 
+				| CONTEXT ClassifierContext;
+ContextBody ::= Stereotype DOISPONTOS OCLExpression;
+OperationContext ::= ID QUATROPONTOS OperationName LPAREN FormalParameters RPAREN  
+				| ID QUATROPONTOS OperationName LPAREN FormalParameters RPAREN DOISPONTOS ReturnType ;
+ReturnType ::= TypeIDifier;
+ClassifierContext ::= ID DOISPONTOS ID 
+				| ID;
+OperationName ::= ID;
+FormalParameters ::= FormalParameters VIRGULA FormalParameter
+				|FormalParameter;				
+FormalParameter ::= ID DOISPONTOS TypeIDifier;
+
+Stereotype ::= PRE| POS | INV;
+
+TypeSpecifier ::= CollectionType 
+				| SimpleTypeSpecifier ;
+
+//Tipos
+CollectionType ::= CollectionKind LPAREN SimpleTypeSpecifier RPAREN;
+CollectionKind ::= SET | BAG | SEQUENCE | COLLECTION;
+SimpleTypeSpecifier ::= PathName;
+PathName ::= ID | PathName PONTO PathName ;
+
+// Expressões
+OCLExpression ::= ID;
