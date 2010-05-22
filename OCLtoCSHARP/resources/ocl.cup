@@ -9,7 +9,7 @@ terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR, ID, S
 
 /* Não terminais */
 non terminal            OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
-non terminal			OperationName, FormalParameters,  ReturnType, TypeIDifier, FormalParameter, TypeSpecifier,CollectionType, CollectionKind;
+non terminal			OperationName, FormalParameters,  ReturnType, TypeIdentifier, FormalParameter, TypeSpecifier,CollectionType, CollectionKind;
 non terminal 			SimpleTypeSpecifier, PathName;
 
 /* Regras */
@@ -23,19 +23,20 @@ ContextDeclaration ::= CONTEXT OperationContext
 ContextBody ::= Stereotype DOISPONTOS OCLExpression;
 OperationContext ::= ID QUATROPONTOS OperationName LPAREN FormalParameters RPAREN  
 				| ID QUATROPONTOS OperationName LPAREN FormalParameters RPAREN DOISPONTOS ReturnType ;
-ReturnType ::= TypeIDifier;
+ReturnType ::= TypeIdentifier;
 ClassifierContext ::= ID DOISPONTOS ID 
 				| ID;
 OperationName ::= ID;
 FormalParameters ::= FormalParameters VIRGULA FormalParameter
 				|FormalParameter;				
-FormalParameter ::= ID DOISPONTOS TypeIDifier;
+FormalParameter ::= ID DOISPONTOS TypeIdentifier;
 
 Stereotype ::= PRE| POS | INV;
 
 TypeSpecifier ::= CollectionType 
 				| SimpleTypeSpecifier ;
 
+TypeIdentifier ::= ID;
 //Tipos
 CollectionType ::= CollectionKind LPAREN SimpleTypeSpecifier RPAREN;
 CollectionKind ::= SET | BAG | SEQUENCE | COLLECTION;
