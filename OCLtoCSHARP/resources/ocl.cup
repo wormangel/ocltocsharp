@@ -5,20 +5,33 @@ import java_cup.runtime.*;
 terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDING, EXCLUDING, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
 terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
 terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR, ID, STRING, NUMBER, TRUE, FALSE, SET, BAG, SEQUENCE, COLLECTION;
-terminal			INTEGER, VOID, REAL, BOOLEAN, AND, OR, XOR, NOT, ENDIF;
+terminal			INTEGER, VOID, REAL, BOOLEAN, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE;
 
 
 /* Não terminais */
 non terminal            OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
 non terminal			OperationName, FormalParameters,  ReturnType, TypeIdentifier, FormalParameter, TypeSpecifier, CollectionType, CollectionKind,SimpleTypeSpecifier, PathName, OCLLiteral;
+non terminal			BoolValue, Number;
 //Expressions
-non terminal 			LogicalExpression, RelationalExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PostFixExpression, PrimaryExpression, PropertyCall;
+non terminal 			LogicalExpression, NumberExpression, StringExpression, PropertyCall, PropertyCallExpression;
 //Operators
 non terminal			MultiplyOperator, EqualityOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
 //Conditional Expressions
 non terminal			ConditionalExpression, IfExpression, ImpliesExpression;
 //Collections
 non terminal			CollectionItems, CollectionExpression, LiteralCollection, CollectionOperations, SelectOperation, ExistsOperation, IncludingOperation, ExcludingOperation, ForAllOperation, SizeOperation, CollectionParameters;
+
+precedence left IMPLIES;
+precedence left XOR;
+precedence left OR;
+precedence left AND;
+precedence left DIFF, IGUAL;
+precedence left MENORIGUAL, MAIORIGUAL, MENORQ, MAIORQ;
+precedence left IF, THEN, ELSE, ENDIF;
+precedence left MAIS, MENOS;
+precedence left VEZES, DIVIDIR;
+precedence left PONTO, SETA;
+
 
 /* Regras */
 // Regra Inicial
@@ -28,8 +41,10 @@ OCLConstraints ::= Constraint OCLConstraints | Constraint;
 Constraint ::= ContextDeclaration ContextBody;
 ContextDeclaration ::= CONTEXT OperationContext 
 				| CONTEXT ClassifierContext;
-ContextBody ::= Stereotype DOISPONTOS OCLExpression;
-OperationContext ::= ID QUATROPONTOS OperationName LPAREN FormalParameters RPAREN  
+ContextBody ::= Stereotype DOISPONTOS OCLExpression
+				| Stereotype ID DOISPONTOS OCLExpression;
+OperationContext ::= ID QUATROPONTOS OperationName LPAREN RPAREN  
+				| ID QUATROPONTOS OperationName LPAREN FormalParameters RPAREN  
 				| ID QUATROPONTOS OperationName LPAREN FormalParameters RPAREN DOISPONTOS ReturnType ;
 ReturnType ::= TypeIdentifier;
 ClassifierContext ::= ID DOISPONTOS ID 
@@ -41,28 +56,48 @@ FormalParameter ::= ID DOISPONTOS TypeIdentifier;
 Stereotype ::= PRE| POS | INV;
 
 // Expressões
-OCLExpression ::= LogicalExpression;
-LogicalExpression ::= RelationalExpression 
-				| RelationalExpression LogicalOperator LogicalExpression;
-RelationalExpression ::= AdditiveExpression
-				| AdditiveExpression RelationalOperator RelationalExpression;
-AdditiveExpression ::= MultiplicativeExpression
-				| MultiplicativeExpression AddOperator AdditiveExpression;
-MultiplicativeExpression ::= UnaryExpression
-				| UnaryExpression MultOperator MultiplicativeExpression;
-UnaryExpression	::=	UnaryOperator PostFixExpression
-				|PrimaryExpression;
-PrimaryExpression ::= LPAREN LogicalExpression RPAREN
-				| CollectionExpression
-				| ConditionalExpression;
+OCLExpression ::= LogicalExpression
+				| NumberExpression
+				| StringExpression
+				| ConditionalExpression
+				| CollectionExpression;
+				
+
+LogicalExpression ::= LPAREN LogicalExpression RPAREN
+				| LogicalExpression LogicalOperator LogicalExpression
+				| NOT LogicalExpression
+				| NumberExpression RelationalOperator NumberExpression
+				| NumberExpression EqualityOperator NumberExpression
+				| StringExpression EqualityOperator StringExpression
+				| BoolValue
+				| PropertyCallExpression ;
+
+NumberExpression ::= Number
+				| Number AddOperator NumberExpression
+				| Number MultiplyOperator NumberExpression;
+				
+	
+StringExpression ::= STRING EqualityOperator STRING;
+
+PropertyCall ::= PathName LPAREN FormalParameters RPAREN
+				| PathName LPAREN RPAREN 
+				| PathName;
+
+PropertyCallExpression ::= PropertyCall LogicalOperator PropertyCall
+				| PropertyCall RelationalOperator PropertyCall
+				| PropertyCall EqualityOperator PropertyCall
+				| PropertyCall LogicalOperator LogicalExpression
+				| PropertyCall EqualityOperator LogicalExpression
+				| PropertyCall RelationalOperator NumberExpression
+				| PropertyCall EqualityOperator NumberExpression
+				| PropertyCall EqualityOperator StringExpression;
 
 //Expressões condicionais
-ConditionalExpression ::= ImpliesExpression
-				| IfExpression;
+ConditionalExpression ::= ImpliesExpression	| IfExpression;
 ImpliesExpression ::= LogicalExpression IMPLIES LogicalExpression;
 IfExpression ::= IF LogicalExpression THEN  LogicalExpression  ELSE  LogicalExpression ENDIF;	
 
-//Expressões em coleões				
+//Expressões em coleções				
 CollectionExpression ::= PathName SETA CollectionOperations;
 CollectionOperations ::= SelectOperation
 				|ExistsOperation
@@ -80,7 +115,9 @@ ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN;
 ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
 				| FORALL OCLExpression RPAREN;
-SizeOperation ::= SIZE LPAREN RPAREN;
+SizeOperation ::= SIZE LPAREN RPAREN
+				|SIZE LPAREN RPAREN RelationalOperator NumberExpression
+				| SIZE LPAREN RPAREN EqualityOperator NumberExpression;
 CollectionParameters ::= PathName
 				| PathName VIRGULA CollectionParameters;
 
@@ -89,10 +126,12 @@ CollectionParameters ::= PathName
 TypeSpecifier ::= CollectionType 
 				| SimpleTypeSpecifier ;
 CollectionType ::= CollectionKind LPAREN SimpleTypeSpecifier RPAREN;
-SimpleTypeSpecifier ::= PathName | INTEGER | VOID | STRING | REAL | BOOLEAN ;
+SimpleTypeSpecifier ::= PathName | INTTYPE | REALTYPE | VOID | STRING |  BOOLEAN ;
 PathName ::= ID | ID PONTO PathName ;
 TypeIdentifier ::= ID;
-OCLLiteral ::= STRING | REAL | INTEGER | TRUE | FALSE;
+OCLLiteral ::= STRING | Number| BoolValue;
+Number ::= INTEGER | REAL;
+BoolValue ::= TRUE | FALSE;
 LiteralCollection ::= CollectionKind LCHAVE CollectionItems RCHAVE
 				|  CollectionKind LCHAVE  RCHAVE;
 CollectionItems ::= OCLExpression
