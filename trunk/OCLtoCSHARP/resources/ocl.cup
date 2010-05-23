@@ -10,10 +10,15 @@ terminal			INTEGER, VOID, REAL, BOOLEAN, AND, OR, XOR, NOT, ENDIF;
 
 /* Não terminais */
 non terminal            OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
-non terminal			OperationName, FormalParameters,  ReturnType, TypeIdentifier, FormalParameter, TypeSpecifier,CollectionType, CollectionKind;
-non terminal 			SimpleTypeSpecifier, PathName, LogicalExpression, RelationalExpression, LogicalOperator, AdditiveExpression, MultiplicativeExpression;
-non terminal			AddOperator, UnaryExpression, MultOperator, UnaryOperator, RelationalOperator, PostFixExpression, PrimaryExpression, PropertyCall, LiteralCollection;
-non terminal			OCLLiteral, IfExpression, CollectionItems, EqualityOperator, MultiplyOperator, PostfixOperator, ImpliesExpression, CollectionExpression;
+non terminal			OperationName, FormalParameters,  ReturnType, TypeIdentifier, FormalParameter, TypeSpecifier, CollectionType, CollectionKind,SimpleTypeSpecifier, PathName, OCLLiteral;
+//Expressions
+non terminal 			LogicalExpression, RelationalExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PostFixExpression, PrimaryExpression, PropertyCall;
+//Operators
+non terminal			MultiplyOperator, EqualityOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
+//Conditional Expressions
+non terminal			ConditionalExpression, IfExpression, ImpliesExpression;
+//Collections
+non terminal			CollectionItems, CollectionExpression, LiteralCollection, CollectionOperations, SelectOperation, ExistsOperation, IncludingOperation, ExcludingOperation, ForAllOperation, SizeOperation, CollectionParameters;
 
 /* Regras */
 // Regra Inicial
@@ -46,24 +51,39 @@ AdditiveExpression ::= MultiplicativeExpression
 MultiplicativeExpression ::= UnaryExpression
 				| UnaryExpression MultOperator MultiplicativeExpression;
 UnaryExpression	::=	UnaryOperator PostFixExpression
-				| PostFixExpression;
-PostFixExpression ::= PrimaryExpression
-				| PrimaryExpression SETA PropertyCall
-				| PrimaryExpression PONTO PropertyCall;
-PrimaryExpression ::= LPAREN OCLExpression RPAREN
-				// TODO| PropertyCall
-				// TODO| LiteralCollection
-				| OCLLiteral
-				| IfExpression;
-				//| ImpliesExpression;
-//TODO
-PropertyCall ::= ID;
-LiteralCollection ::= ID;
-CollectionExpression ::= PathName SETA;
-//TODO
+				|PrimaryExpression;
+PrimaryExpression ::= LPAREN LogicalExpression RPAREN
+				| CollectionExpression
+				| ConditionalExpression;
 
-ImpliesExpression ::= OCLExpression IMPLIES OCLExpression;
-IfExpression ::= IF OCLExpression THEN  OCLExpression  ELSE  OCLExpression ENDIF;	
+//Expressões condicionais
+ConditionalExpression ::= ImpliesExpression
+				| IfExpression;
+ImpliesExpression ::= LogicalExpression IMPLIES LogicalExpression;
+IfExpression ::= IF LogicalExpression THEN  LogicalExpression  ELSE  LogicalExpression ENDIF;	
+
+//Expressões em coleões				
+CollectionExpression ::= PathName SETA CollectionOperations;
+CollectionOperations ::= SelectOperation
+				|ExistsOperation
+				|IncludingOperation
+				|ExcludingOperation
+				|ForAllOperation
+				|SizeOperation;
+SelectOperation ::= SELECT LPAREN OCLExpression RPAREN
+				| SELECT LPAREN PathName BARRA OCLExpression RPAREN;
+ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
+				| EXISTS LPAREN CollectionParameters BARRA OCLExpression RPAREN
+				| EXISTS OCLExpression RPAREN;
+IncludingOperation ::= INCLUDING LPAREN ID RPAREN;
+ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN;
+ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
+				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
+				| FORALL OCLExpression RPAREN;
+SizeOperation ::= SIZE LPAREN RPAREN;
+CollectionParameters ::= PathName
+				| PathName VIRGULA CollectionParameters;
+
 
 //Tipos
 TypeSpecifier ::= CollectionType 
