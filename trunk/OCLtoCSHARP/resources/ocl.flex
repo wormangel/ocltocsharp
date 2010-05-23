@@ -62,6 +62,8 @@ comment = [\-][\-]({letter}|{digit})*
 "or"		{System.out.print("( OR )"); return symbol(sym.OR); }
 "xor"		{System.out.print("( XOR )"); return symbol(sym.XOR); }
 "not"		{System.out.print("( NOT )"); return symbol(sym.NOT); }
+"integer"	{System.out.print("( INTTYPE)"); return symbol(sym.INTTYPE); }
+"real"		{System.out.print("( REALTYPE )"); return symbol(sym.REALTYPE); }
 "("			{System.out.print("( LPAREN )"); return symbol(sym.LPAREN); }
 ")"			{System.out.print("( RPAREN )"); return symbol(sym.RPAREN); }
 "["			{System.out.print("( LCOLCH )"); return symbol(sym.LCOLCH); }
