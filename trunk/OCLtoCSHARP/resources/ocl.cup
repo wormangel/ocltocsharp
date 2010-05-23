@@ -5,12 +5,15 @@ import java_cup.runtime.*;
 terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDING, EXCLUDING, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
 terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
 terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR, ID, STRING, NUMBER, TRUE, FALSE, SET, BAG, SEQUENCE, COLLECTION;
+terminal			INTEGER, VOID, REAL, BOOLEAN, AND, OR, XOR, NOT, ENDIF;
 
 
 /* Não terminais */
 non terminal            OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
 non terminal			OperationName, FormalParameters,  ReturnType, TypeIdentifier, FormalParameter, TypeSpecifier,CollectionType, CollectionKind;
-non terminal 			SimpleTypeSpecifier, PathName;
+non terminal 			SimpleTypeSpecifier, PathName, LogicalExpression, RelationalExpression, LogicalOperator, AdditiveExpression, MultiplicativeExpression;
+non terminal			AddOperator, UnaryExpression, MultOperator, UnaryOperator, RelationalOperator, PostFixExpression, PrimaryExpression, PropertyCall, LiteralCollection;
+non terminal			OCLLiteral, IfExpression, CollectionItems, EqualityOperator, MultiplyOperator, PostfixOperator, ImpliesExpression, CollectionExpression;
 
 /* Regras */
 // Regra Inicial
@@ -30,18 +33,56 @@ OperationName ::= ID;
 FormalParameters ::= FormalParameters VIRGULA FormalParameter
 				|FormalParameter;				
 FormalParameter ::= ID DOISPONTOS TypeIdentifier;
-
 Stereotype ::= PRE| POS | INV;
 
+// Expressões
+OCLExpression ::= LogicalExpression;
+LogicalExpression ::= RelationalExpression 
+				| RelationalExpression LogicalOperator LogicalExpression;
+RelationalExpression ::= AdditiveExpression
+				| AdditiveExpression RelationalOperator RelationalExpression;
+AdditiveExpression ::= MultiplicativeExpression
+				| MultiplicativeExpression AddOperator AdditiveExpression;
+MultiplicativeExpression ::= UnaryExpression
+				| UnaryExpression MultOperator MultiplicativeExpression;
+UnaryExpression	::=	UnaryOperator PostFixExpression
+				| PostFixExpression;
+PostFixExpression ::= PrimaryExpression
+				| PrimaryExpression SETA PropertyCall
+				| PrimaryExpression PONTO PropertyCall;
+PrimaryExpression ::= LPAREN OCLExpression RPAREN
+				// TODO| PropertyCall
+				// TODO| LiteralCollection
+				| OCLLiteral
+				| IfExpression;
+				//| ImpliesExpression;
+//TODO
+PropertyCall ::= ID;
+LiteralCollection ::= ID;
+CollectionExpression ::= PathName SETA;
+//TODO
+
+ImpliesExpression ::= OCLExpression IMPLIES OCLExpression;
+IfExpression ::= IF OCLExpression THEN  OCLExpression  ELSE  OCLExpression ENDIF;	
+
+//Tipos
 TypeSpecifier ::= CollectionType 
 				| SimpleTypeSpecifier ;
-
-TypeIdentifier ::= ID;
-//Tipos
 CollectionType ::= CollectionKind LPAREN SimpleTypeSpecifier RPAREN;
+SimpleTypeSpecifier ::= PathName | INTEGER | VOID | STRING | REAL | BOOLEAN ;
+PathName ::= ID | ID PONTO PathName ;
+TypeIdentifier ::= ID;
+OCLLiteral ::= STRING | REAL | INTEGER | TRUE | FALSE;
+LiteralCollection ::= CollectionKind LCHAVE CollectionItems RCHAVE
+				|  CollectionKind LCHAVE  RCHAVE;
+CollectionItems ::= OCLExpression
+				| OCLExpression VIRGULA CollectionItems;
+//Operators
+LogicalOperator ::= AND | OR | XOR;
 CollectionKind ::= SET | BAG | SEQUENCE | COLLECTION;
-SimpleTypeSpecifier ::= PathName;
-PathName ::= ID | PathName PONTO PathName ;
-
-// Expressões
-OCLExpression ::= ID;
+EqualityOperator ::= IGUAL | DIFF;
+RelationalOperator ::= MAIORQ | MAIORIGUAL | MENORQ | MENORIGUAL;
+AddOperator ::= MAIS | MENOS;
+MultiplyOperator ::= VEZES | DIVIDIR;
+UnaryOperator ::= NOT | MENOS;
+PostfixOperator ::= PONTO | SETA;
