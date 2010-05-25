@@ -37,7 +37,7 @@ comment = [\-][\-]({letter}|{digit})*
 %%
 
 "pre"		{System.out.print("( PRE )"); return symbol(sym.PRE); }
-"pos"		{System.out.print("( POS )"); return symbol(sym.POS); }
+"post"		{System.out.print("( POS )"); return symbol(sym.POS); }
 "inv"		{System.out.print("( INV )"); return symbol(sym.INV); }
 "select"	{System.out.print("( SELECT )"); return symbol(sym.SELECT); }
 "exists"	{System.out.print("( EXISTS )"); return symbol(sym.EXISTS); }
@@ -47,8 +47,8 @@ comment = [\-][\-]({letter}|{digit})*
 "else"		{System.out.print("( ELSE )"); return symbol(sym.ELSE); }
 "endif"		{System.out.print("( ENDIF )"); return symbol(sym.ENDIF); }
 "implies"	{System.out.print("( IMPLIES )"); return symbol(sym.IMPLIES); }
-"including"	{System.out.print("( INCLUDING )"); return symbol(sym.INCLUDING); }
-"excluding"	{System.out.print("( EXCLUDING )"); return symbol(sym.EXCLUDING); }
+"includes"	{System.out.print("( INCLUDING )"); return symbol(sym.INCLUDING); }
+"excludes"	{System.out.print("( EXCLUDING )"); return symbol(sym.EXCLUDING); }
 "oclIsNew"	{System.out.print("( OCLISNEW )"); return symbol(sym.OCLISNEW); }
 "@pre"		{System.out.print("( ARROBAPRE )"); return symbol(sym.ATPRE); }
 "result"	{System.out.print("( RESULT )"); return symbol(sym.RESULT); }

@@ -13,7 +13,7 @@ non terminal            OCLConstraints, Constraint, ContextDeclaration, ContextB
 non terminal			OperationName, FormalParameters,  ReturnType, FormalParameter, TypeSpecifier, CollectionType, CollectionKind,SimpleTypeSpecifier, PathName, OCLLiteral;
 non terminal			BoolValue, Number;
 //Expressions
-non terminal 			LogicalExpression, NumberExpression, StringExpression, PropertyCall, PropertyCallExpression;
+non terminal 			LogicalExpression, NumberExpression, StringExpression, PropertyCall, PropertyCallExpression, InvExpression, PreExpression, EqualityExpression;
 //Operators
 non terminal			MultiplyOperator, EqualityOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
 //Conditional Expressions
@@ -41,8 +41,15 @@ OCLConstraints ::= Constraint OCLConstraints | Constraint;
 Constraint ::= ContextDeclaration ContextBody;
 ContextDeclaration ::= CONTEXT OperationContext 
 				| CONTEXT ClassifierContext;
-ContextBody ::= Stereotype DOISPONTOS OCLExpression
-				| Stereotype ID DOISPONTOS OCLExpression;
+ContextBody ::= InvExpression
+				| PreExpression;
+InvExpression ::= INV DOISPONTOS OCLExpression
+				| INV ID DOISPONTOS OCLExpression;
+PreExpression ::= PRE DOISPONTOS OCLExpression
+				| PRE ID DOISPONTOS OCLExpression
+				| PRE DOISPONTOS OCLExpression POS DOISPONTOS OCLExpression
+				| PRE ID DOISPONTOS OCLExpression POS ID DOISPONTOS OCLExpression;
+
 OperationContext ::= ID QUATROPONTOS OperationName LPAREN RPAREN  
 				| ID QUATROPONTOS OperationName LPAREN FormalParameters RPAREN  
 				| ID QUATROPONTOS OperationName LPAREN FormalParameters RPAREN DOISPONTOS SimpleTypeSpecifier ;
@@ -51,45 +58,11 @@ ClassifierContext ::= ID DOISPONTOS ID
 OperationName ::= ID;
 FormalParameters ::= FormalParameters VIRGULA FormalParameter
 				|FormalParameter;				
-FormalParameter ::= ID DOISPONTOS SimpleTypeSpecifier;
-Stereotype ::= PRE| POS | INV;
+FormalParameter ::= ID DOISPONTOS SimpleTypeSpecifier
+				|PropertyCall;
 
-// Expressões
-OCLExpression ::= LogicalExpression
-				| NumberExpression
-				| StringExpression
-				| ConditionalExpression
-				| CollectionExpression;
-				
+// Expressões TODO
 
-LogicalExpression ::= LPAREN LogicalExpression RPAREN
-				| LogicalExpression LogicalOperator LogicalExpression
-				| NOT OCLExpression
-				| NumberExpression RelationalOperator NumberExpression
-				| NumberExpression EqualityOperator NumberExpression
-				| StringExpression EqualityOperator StringExpression
-				| BoolValue
-				| PropertyCallExpression ;
-
-NumberExpression ::= Number
-				| Number AddOperator NumberExpression
-				| Number MultiplyOperator NumberExpression;
-				
-	
-StringExpression ::= STRING EqualityOperator STRING;
-
-PropertyCall ::= PathName LPAREN FormalParameters RPAREN
-				| PathName LPAREN RPAREN 
-				| PathName;
-
-PropertyCallExpression ::= PropertyCall LogicalOperator PropertyCall
-				| PropertyCall RelationalOperator PropertyCall
-				| PropertyCall EqualityOperator PropertyCall
-				| PropertyCall LogicalOperator LogicalExpression
-				| PropertyCall EqualityOperator LogicalExpression
-				| PropertyCall RelationalOperator NumberExpression
-				| PropertyCall EqualityOperator NumberExpression
-				| PropertyCall EqualityOperator StringExpression;
 
 //Expressões condicionais
 ConditionalExpression ::= ImpliesExpression	| IfExpression;
@@ -114,9 +87,11 @@ ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN;
 ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
 				| FORALL OCLExpression RPAREN;
-SizeOperation ::= SIZE LPAREN RPAREN
-				|SIZE LPAREN RPAREN RelationalOperator NumberExpression
-				| SIZE LPAREN RPAREN EqualityOperator NumberExpression;
+SizeOperation ::= SIZE   
+				| SIZE   RelationalOperator NumberExpression
+				| SIZE   EqualityOperator NumberExpression
+				| SIZE   EqualityOperator PropertyCallExpression
+				| SIZE   EqualityOperator CollectionExpression;
 CollectionParameters ::= PathName
 				| PathName VIRGULA CollectionParameters;
 
@@ -127,7 +102,6 @@ TypeSpecifier ::= CollectionType
 CollectionType ::= CollectionKind LPAREN SimpleTypeSpecifier RPAREN;
 SimpleTypeSpecifier ::= PathName | INTTYPE | REALTYPE | VOID | STRING |  BOOLEAN ;
 PathName ::= ID | ID PONTO PathName ;
-OCLLiteral ::= STRING | Number| BoolValue;
 Number ::= INTEGER | REAL;
 BoolValue ::= TRUE | FALSE;
 LiteralCollection ::= CollectionKind LCHAVE CollectionItems RCHAVE
@@ -142,4 +116,3 @@ RelationalOperator ::= MAIORQ | MAIORIGUAL | MENORQ | MENORIGUAL;
 AddOperator ::= MAIS | MENOS;
 MultiplyOperator ::= VEZES | DIVIDIR;
 UnaryOperator ::= NOT | MENOS;
-PostfixOperator ::= PONTO | SETA;
