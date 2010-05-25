@@ -1,0 +1,270 @@
+context Customer
+inv: age >= 18
+
+context Membership
+inv: card.customer = customer
+
+context CustomerCard
+inv: printedName = customer.title.concat( customer.name )
+
+context LoyaltyProgram
+inv: serviceLevel->size = 2
+
+context Customer
+inv: program->size = cards->select( valid = true )->size
+
+context LoyaltyProgram
+inv: partners.deliveredServices->forAll(
+          pointsEarned = 0 and pointsBurned = 0 ) 
+      implies membership.loyaltyAccount->isEmpty
+
+context ProgramPartner
+inv: numberOfCustomers = loyaltyProgram.customer->size
+
+context ProgramPartner
+inv: numberOfCustomers = loyaltyProgram.customer->asSet->size
+
+context LoyaltyProgram
+inv: serviceLevel->first.name = 'Silver'
+
+context LoyaltyProgram
+inv: partners.deliveredServices.transaction.points->sum < 10000 
+
+context LoyaltyProgram
+inv: partners.deliveredServices.transaction
+         ->select(oclType = Burning)
+                 ->collect( points )->sum < 10000 
+
+context Membership
+inv: actualLevel.name = 'Silver' implies card.color = Color::silver
+and
+actualLevel.name = 'Gold' implies card.color = Color::gold
+
+context LoyaltyAccount::isEmpty()
+post: result = (points = 0)
+
+context Customer
+inv: age >= 18
+
+context LoyaltyProgram
+inv: customer->forAll( age >= 18 )
+
+context Customer
+inv: name = 'Edward'
+
+context Customer
+inv: self.name = 'Edward'
+
+context Membership
+inv: customer.card.membership.includes( self )
+
+context Services
+inv: self.pointsOffered > 0 implies not self.pointsBurned = 0 
+
+context Customer
+inv: title = (if isMale = true 
+            then 'Mr.' 
+            else 'Ms.'
+         endif)
+
+context Customer
+inv: 	self.age() >= 0
+
+context Customer
+inv: 	self.isRelatedTo(self) = true
+
+context Customer
+inv: self.name = 'Jos senior' implies self.age() > 21
+
+context Transaction
+inv: self.program() = customerCard.membership.program
+
+context Membership
+inv: program.serviceLevel->includes( actualLevel )
+
+context LoyaltyProgram
+inv: serviceLevel->includesAll( membership.actualLevel )
+
+context LoyaltyProgram
+inv: self.serviceLevel->exists(name = 'basic')
+
+context LoyaltyProgram
+inv: self.PartnerAspects::partners->size < 10
+
+context CassetteBook
+inv: self.volume < 10
+
+context CassetteBook
+inv: self.Cassette::volume < 10
+
+context Customer
+inv: 	gender = Sex::male implies title = 'Mr.'
+
+context LoyaltyProgram
+inv: self.customer->size < 10000
+
+context LoyaltyProgram
+inv: self.serviceLevel->first.name = 'basic'
+
+context Membership
+inv: loyaltyAccount.isEmpty 
+
+context Membership
+inv: loyaltyAccount->isEmpty 
+
+
+inv: 	Set { Set { 1, 2 }, Set { 3, 4 }, Set { 5, 6 } }
+inv: 	Set { 1, 2, 3, 4, 5, 6 }
+
+
+context Membership
+inv: program.serviceLevel	->includes(actualLevel)
+
+context ServiceLevel
+inv: loyaltyProgram.partners->includesAll(availableServices.programPartner)
+
+inv: Set{1,4,7,10} - Set{4,7} = Set{1,10}
+inv: Set{1,4,7,10}.symmetricDifference(Set{4,5,7}) = Set{1,5,10}
+
+inv: Sequence{1,4,7,10}->first = 1
+inv: Sequence{1,4,7,10}->last = 10
+inv: Sequence{1,4,7,10}->at( 3 ) = 7
+inv: Sequence{1,4,7,10}->append( 15 ) = Sequence{1,4,7,10,15}
+inv: Sequence{1,4,7,10}->prepend( 15 ) = Sequence{15,1,4,7,10}
+
+context CustomerCard
+inv: 	self.transactions->select( points > 100 )
+
+context Customer
+inv: 	membership.loyaltyAccount->select(a : LoyaltyAccount | a.points > 0)
+
+context Customer
+inv: 	membership.loyaltyAccount->select(a | a.points > 0)
+
+context Customer
+inv: 	membership.loyaltyAccount->select( points > 0 )
+
+context ProgramPartner
+inv: 	self.loyaltyProgram.partners->
+                        select(p : ProgramPartner | p <> self)
+
+context Customer
+inv: 	membership.loyaltyAccount->select( points > 0 )
+
+context Customer
+inv: 	membership.loyaltyAccount->reject( not (points > 0) )
+
+context LoyaltyAccount
+inv: transaction->collect( points )
+
+context LoyaltyAccount
+inv: transaction->collect( points )->
+                        exists( p : Integer | p = 500 )
+
+context LoyaltyAccount
+inv: transactions.points->exist(p : Integer | p = 500 )
+
+context LoyaltyProgram
+inv: 	self.customer->forAll( c : Customer | c.age() <= 70 )
+
+context LoyaltyProgram
+inv: 	self.customer->forAll( c | c.age() <= 70 )
+
+context LoyaltyProgram
+inv: 	self.customer->forAll( age() <= 70 )
+
+context LoyaltyProgram
+inv: 	self.customer->forAll(c1, c2 |	c1 <> c2 implies c1.name <> c2.name)
+
+context LoyaltyProgram
+inv: 	self.customer->forAll( c1 | self.customer->forAll( c2 |
+	      	                      c1 <> c2 implies c1.name <> c2.name ))
+
+context LoyaltyAccount
+inv: points > 0 implies transaction->exists(points > 0)
+
+context ProgramPartner
+inv: self.services.transaction->iterate(
+    t      : Transaction;
+    result : Integer = 0 |
+    if t.oclType = Burning then
+        result + points
+    else
+        result
+    endif
+)
+<=
+self.services.transaction->iterate(
+    t      : Transaction;
+    result : Integer = 0 |
+    if t.oclType = Earning then
+        result + points
+    else
+        result
+    endif
+)
+
+context ProgramPartner
+inv: self.services.transaction->select(oclType = Burning)->sum
+<=
+self.services.transaction->select(oclType = Earning)->sum
+
+context LoyaltyProgram::enroll(c : Customer)
+pre : not customer->includes(c)
+post: customer = customer@pre->including(c)
+
+post: membership->select(customer = c)->forAll(
+           loyaltyAccount->notEmpty() and
+           loyaltyAccount.points = 0  and
+           loyaltyAccount.transactions->isEmpty )
+
+context Transaction::program():LoyaltyProgram
+post: result = self.card.membership.program
+
+-- Section 3.8 
+
+context Transaction
+inv: self.oclType = Transaction
+inv: self.oclIsKindOf(Transaction) = true
+inv: self.oclIsTypeOf(Transaction) = true
+inv: self.oclIsTypeOf(Burning) = false
+inv: self.oclIsKindOf(Burning) = false
+
+context Burning
+inv: self.oclType = Burning
+inv: self.oclIsKindOf(Transaction) = true
+inv: self.oclIsTypeOf(Transaction) = false
+inv: self.oclIsTypeOf(Burning) = true
+inv: self.oclIsKindOf(Burning) = true
+inv: self.oclIsTypeOf(Earning) = false
+inv: self.oclIsKindOf(Earning) = false
+
+context ApplePie
+inv: self.ingredient->forAll(oclIsKindOf(Apple))
+
+context PeachPie
+inv: self.ingredient->forAll(oclIsKindOf(Peach))
+
+-- Section 3.9
+context Unknown
+inv: Customer.name = 'Customer'
+
+inv: Transaction.attributes = Set{'points', 'date'}
+
+inv: Transaction.associationEnds = 
+           Set{'serviceLevel',  'loyaltyAccount', 'card'}
+
+inv: Burning.supertypes = Set{ Transaction }
+
+inv: Transaction.operations = Set{'program'}
+
+inv: Transaction.allInstances
+
+inv: Date.now      -- results in a Date instance 
+
+-- Section 3.12
+
+-- the expression 20 * 5 + 4 should be evaluated here
+inv: 20 * 5 + 4 -- this is a comment
+
+endpackage

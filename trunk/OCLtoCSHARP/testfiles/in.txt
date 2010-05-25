@@ -1,4 +1,4 @@
 context Cliente inv: self.idade() >= 18
 context Cliente inv: idade() >= 18
 context c : Cliente inv idadeMinima: c->size() >= 18
-context ProgramaFidelidade::cadastrar(c : Cliente) : void pre parametroOk: not cliente->including(c)
+context ProgramaFidelidade::cadastrar(c : Cliente) : void pre parametroOk: not cliente->including(c) pos resultadoOk: cliente = cliente@pre->including(c)
