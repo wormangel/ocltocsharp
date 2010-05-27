@@ -31,8 +31,8 @@ digit	= [0-9]
 id		= [_]*{letter}({letter}|{digit})*
 real	= {digit}+(\.{digit}+)?(E[+-]?{digit}+)?
 integer = ([\-]({digit})* | ({digit})*)
-string	= [\"]({letter}|{digit})*[\"]
-comment = [\-][\-]({letter}|{digit})*
+string	= '~'
+comment = [\-][\-]~{ws}
 
 %%
 
@@ -64,6 +64,8 @@ comment = [\-][\-]({letter}|{digit})*
 "not"		{System.out.print("( NOT )"); return symbol(sym.NOT); }
 "integer"	{System.out.print("( INTTYPE)"); return symbol(sym.INTTYPE); }
 "real"		{System.out.print("( REALTYPE )"); return symbol(sym.REALTYPE); }
+"package"		{System.out.print("( PACKAGE )"); return symbol(sym.PACKAGE); }
+"endpackage"		{System.out.print("( ENDPACKAGE )"); return symbol(sym.ENDPACKAGE); }
 "("			{System.out.print("( LPAREN )"); return symbol(sym.LPAREN); }
 ")"			{System.out.print("( RPAREN )"); return symbol(sym.RPAREN); }
 "["			{System.out.print("( LCOLCH )"); return symbol(sym.LCOLCH); }
