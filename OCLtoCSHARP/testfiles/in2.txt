@@ -47,16 +47,24 @@ inv: self.volume < 10
 context Customer
 inv: 	gender = 'male' implies title = 'Mr.'
 
-context ProgramaFidelidade::cadastrar(c : Cliente) : void pre parametroOk: not cliente->including(c) pos resultadoOk: cliente = cliente@pre->including(c)
-
-context LoyaltyProgram
-inv: serviceLevel->size = 2
-
 context Unknown
 inv: Customer.name = 'Customer'
 
 context LoyaltyAccount::isEmpty()
 post: result = (points = 0)
+
+context Transaction::program():LoyaltyProgram
+post: result = self.card.membership.program
+
+context Transaction::program():LoyaltyProgram
+post: OclIsNew(result)
+
+context ProgramaFidelidade::cadastrar(c : Cliente) : void pre parametroOk: not cliente->includes(c) post resultadoOk: cliente = cliente@pre->includes(c)
+
+context LoyaltyProgram
+inv: serviceLevel->size = 2
+
+
 
 context Customer
 inv: program->size = cards->select( valid = true )->size

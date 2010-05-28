@@ -13,9 +13,9 @@ non terminal            OCLFile, OCLConstraints, Constraint, ContextDeclaration,
 non terminal			OperationName, FormalParameters,  ReturnType, FormalParameter, TypeSpecifier, CollectionType, CollectionKind,SimpleTypeSpecifier, PathName, OCLLiteral;
 non terminal			BoolValue, Number;
 //Expressions
-non terminal 			PostFixExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
+non terminal 			CollectExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
 //Operators
-non terminal			MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
+non terminal			CollectionOperators , MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
 //Conditional Expressions
 non terminal			ConditionalExpression, IfExpression, ImpliesExpression;
 //Collections
@@ -71,9 +71,11 @@ AdditiveExpression ::= MultiplicativeExpression
 				| MultiplicativeExpression AddOperator AdditiveExpression;
 MultiplicativeExpression ::= UnaryExpression
 				| UnaryExpression MultOperator MultiplicativeExpression;
-UnaryExpression ::= PrimaryExpression
-				| UnaryOperator UnaryExpression
-				| PrimaryExpression UnaryOperator UnaryExpression;
+UnaryExpression ::= CollectExpression
+				| UnaryOperator CollectExpression
+				| CollectExpression UnaryOperator UnaryExpression ;
+CollectExpression ::= PrimaryExpression
+				| PrimaryExpression SETA CollectionOperators CollectExpression;
 PrimaryExpression ::= LiteralCollection 
 				| IfExpression
 				| LPAREN OCLExpression RPAREN;
@@ -87,6 +89,12 @@ IfExpression ::= IF LogicalExpression THEN  LogicalExpression  ELSE  LogicalExpr
 
 //Expressões em coleções				
 CollectionExpression ::= CollectionOperations;
+CollectionOperators ::= SELECT
+				| EXISTS
+				| INCLUDING
+				| EXCLUDING
+				| FORALL
+				| SIZE;
 CollectionOperations ::= SelectOperation
 				|ExistsOperation
 				|IncludingOperation
@@ -129,4 +137,4 @@ CollectionKind ::= SET | BAG | SEQUENCE | COLLECTION;
 RelationalOperator ::= MAIORQ | MAIORIGUAL | MENORQ | MENORIGUAL | IGUAL | DIFF;
 AddOperator ::= MAIS | MENOS;
 MultiplyOperator ::= VEZES | DIVIDIR;
-UnaryOperator ::= NOT | MENOS | SETA;
+UnaryOperator ::= NOT | MENOS;
