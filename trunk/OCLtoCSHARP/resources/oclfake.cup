@@ -74,8 +74,9 @@ MultiplicativeExpression ::= UnaryExpression
 UnaryExpression ::= CollectExpression
 				| UnaryOperator CollectExpression
 				| CollectExpression UnaryOperator UnaryExpression ;
+				
 CollectExpression ::= PrimaryExpression
-				| PrimaryExpression SETA CollectionOperators CollectExpression;
+				| PrimaryExpression SETA CollectionOperators LogicalExpression;
 PrimaryExpression ::= LiteralCollection 
 				| IfExpression
 				| LPAREN OCLExpression RPAREN;
