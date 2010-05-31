@@ -2,7 +2,7 @@ import java_cup.runtime.*;
 
 
 /* Terminais (tokens vindos do lexer) */
-terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDING, EXCLUDING, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
+terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDES, EXCLUDES, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
 terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
 terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR, ID, STRING, NUMBER, TRUE, FALSE, SET, BAG, SEQUENCE, COLLECTION;
 terminal			INTEGER, VOID, REAL, BOOLEAN, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE, PACKAGE, ENDPACKAGE;
@@ -60,9 +60,7 @@ ClassifierContext ::= ID DOISPONTOS ID
 				| ID;
 
 // Expressões 
-OCLExpression ::= LogicalExpression | SETA CollectionExpression ;
-CollectionExpression ::= LogicalExpression
-				|LogicalExpression CollectionOperations CollectionExpression;
+OCLExpression ::= LogicalExpression;
 LogicalExpression ::= RelationalExpression
 				| RelationalExpression LogicalOperator LogicalExpression;
 RelationalExpression  ::= AdditiveExpression
@@ -76,7 +74,9 @@ UnaryExpression ::= PrimaryExpression
 				| PrimaryExpression UnaryOperator UnaryExpression;
 PrimaryExpression ::= LiteralCollection 
 				| IfExpression
-				| LPAREN OCLExpression RPAREN;
+				| LPAREN OCLExpression RPAREN
+				| CollectionExpression
+				;
 
 LiteralCollection ::= Number
 				| BoolValue
@@ -94,16 +94,17 @@ CollectionOperations ::= SelectOperation
 				|ForAllOperation
 				|SizeOperation;
 SelectOperation ::= SELECT LPAREN OCLExpression RPAREN
-				| SELECT LPAREN PathName BARRA OCLExpression RPAREN;
+				| SELECT LPAREN CollectionParameters DOISPONTOS TypeSpecifier  BARRA OCLExpression RPAREN
+				| SELECT LPAREN CollectionParameters BARRA OCLExpression RPAREN;
 ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| EXISTS LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				| EXISTS OCLExpression RPAREN;
-IncludingOperation ::= INCLUDING LPAREN ID RPAREN;
-ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN;
+				| EXISTS LPAREN OCLExpression RPAREN;
+IncludingOperation ::= INCLUDES LPAREN ID RPAREN;
+ExcludingOperation ::= EXCLUDES LPAREN ID RPAREN;
 ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				| FORALL OCLExpression RPAREN;
-SizeOperation ::= SIZE;
+				| FORALL LPAREN OCLExpression RPAREN;
+SizeOperation ::= SIZE LPAREN RPAREN;
 CollectionParameters ::= PropertyCall
 				| PropertyCall VIRGULA CollectionParameters;
 

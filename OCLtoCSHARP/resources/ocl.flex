@@ -22,6 +22,8 @@ import java_cup.runtime.*;
   private Symbol symbol(int type, Object value) {
     return new Symbol(type, yyline, yycolumn, value);
   }
+  
+  private int linha = 1;
 %}
 
 delim	= [ \t\r]
@@ -32,7 +34,8 @@ id		= [_]*{letter}({letter}|{digit})*
 real	= {digit}+(\.{digit}+)?(E[+-]?{digit}+)?
 integer = ([\-]({digit})* | ({digit})*)
 string	= '~'
-comment = [\-][\-]~{ws}
+comment = [\-][\-]~[\r]
+
 
 %%
 
@@ -47,8 +50,8 @@ comment = [\-][\-]~{ws}
 "else"		{System.out.print("( ELSE )"); return symbol(sym.ELSE); }
 "endif"		{System.out.print("( ENDIF )"); return symbol(sym.ENDIF); }
 "implies"	{System.out.print("( IMPLIES )"); return symbol(sym.IMPLIES); }
-"includes"	{System.out.print("( INCLUDING )"); return symbol(sym.INCLUDING); }
-"excludes"	{System.out.print("( EXCLUDING )"); return symbol(sym.EXCLUDING); }
+"includes"	{System.out.print("( INCLUDES )"); return symbol(sym.INCLUDES); }
+"excludes"	{System.out.print("( EXCLUDES )"); return symbol(sym.EXCLUDES); }
 //"oclIsNew"	{System.out.print("( OCLISNEW )"); return symbol(sym.OCLISNEW); }
 "@pre"		{System.out.print("( ARROBAPRE )"); return symbol(sym.ATPRE); }
 "result"	{System.out.print("( RESULT )"); return symbol(sym.RESULT); }
@@ -95,8 +98,9 @@ comment = [\-][\-]~{ws}
 "false"		{System.out.print("( FALSE )"); return symbol(sym.FALSE, new Boolean(false)); }
 "void"		{System.out.print("( VOID )"); return symbol(sym.VOID); }
 "boolean"	{System.out.print("( BOOLEAN )"); return symbol(sym.BOOLEAN); }
+"\n"		{linha++;System.out.println(); System.out.print(linha+ "  ");}
+"\R"		{linha++;System.out.println(); System.out.print(linha+ "  ");}
 {ws}		{}
-"\n"		{System.out.println();}
 {id}		{System.out.print("( ID , "+ yytext() + " )" ); return symbol(sym.ID, yytext()); }
 {string}	{System.out.print("( STR , "+yytext()+" )"  ); return symbol(sym.STRING, yytext()); }
 {real}		{System.out.print("( REAL , " +yytext()+" )"); return symbol(sym.REAL, new Double(yytext())); }

@@ -62,29 +62,24 @@ post: OclIsNew(result)
 context ProgramaFidelidade::cadastrar(c : Cliente) : void pre parametroOk: not cliente->includes(c) post resultadoOk: cliente = cliente@pre->includes(c)
 
 context LoyaltyProgram
-inv: serviceLevel->size = 2
+inv: serviceLevel->size() = 2
 
 
 
 context Customer
-inv: program->size = cards->select( valid = true )->size
+inv: program->size() = cards->select( valid = true )->size()
 
 context ProgramPartner
-inv: numberOfCustomers = loyaltyProgram.customer->size
+inv: numberOfCustomers = loyaltyProgram.customer->size()
 
 context LoyaltyProgram
 inv: partners.deliveredServices.transaction.points->sum < 10000 
 
 context LoyaltyProgram
-inv: partners.deliveredServices.transaction
-         ->select(oclType = Burning)
-                 ->collect( points )->sum < 10000 
-
-context LoyaltyProgram
 inv: customer->forAll( age >= 18 )
 
 context Membership
-inv: customer.card.membership.includes( self )
+inv: customer.card.membership->includes( self )
 
 
 context Membership
@@ -96,11 +91,11 @@ inv: serviceLevel->includesAll( membership.actualLevel )
 context LoyaltyProgram
 inv: self.serviceLevel->exists(name = 'basic')
 
-context LoyaltyProgram
-inv: self.PartnerAspects::partners->size < 10
+--context LoyaltyProgram
+--inv: self.PartnerAspects::partners->size < 10
 
 context LoyaltyProgram
-inv: self.customer->size < 10000
+inv: self.customer->size() < 10000
 
 context LoyaltyProgram
 inv: self.serviceLevel->first.name = 'basic'
@@ -117,15 +112,6 @@ inv: program.serviceLevel	->includes(actualLevel)
 
 context ServiceLevel
 inv: loyaltyProgram.partners->includesAll(availableServices.programPartner)
-
-inv: Set{1,4,7,10} - Set{4,7} = Set{1,10}
-inv: Set{1,4,7,10}.symmetricDifference(Set{4,5,7}) = Set{1,5,10}
-
-inv: Sequence{1,4,7,10}->first = 1
-inv: Sequence{1,4,7,10}->last = 10
-inv: Sequence{1,4,7,10}->at( 3 ) = 7
-inv: Sequence{1,4,7,10}->append( 15 ) = Sequence{1,4,7,10,15}
-inv: Sequence{1,4,7,10}->prepend( 15 ) = Sequence{15,1,4,7,10}
 
 context CustomerCard
 inv: 	self.transactions->select( points > 100 )
@@ -146,18 +132,8 @@ inv: 	self.loyaltyProgram.partners->
 context Customer
 inv: 	membership.loyaltyAccount->select( points > 0 )
 
-context Customer
-inv: 	membership.loyaltyAccount->reject( not (points > 0) )
-
 context LoyaltyAccount
-inv: transaction->collect( points )
-
-context LoyaltyAccount
-inv: transaction->collect( points )->
-                        exists( p : Integer | p = 500 )
-
-context LoyaltyAccount
-inv: transactions.points->exist(p : Integer | p = 500 )
+inv: transactions.points->exists(p : Integer | p = 500 )
 
 context LoyaltyProgram
 inv: 	self.customer->forAll( c : Customer | c.age() <= 70 )
@@ -187,35 +163,6 @@ context LoyaltyProgram::enroll(c : Customer)
 pre : not customer->includes(c)
 post: customer = customer@pre->including(c)
 
-post: membership->select(customer = c)->forAll(
-           loyaltyAccount->notEmpty() and
-           loyaltyAccount.points = 0  and
-           loyaltyAccount.transactions->isEmpty )
-
 context Transaction::program():LoyaltyProgram
 post: result = self.card.membership.program
-
--- Section 3.8 
-
-context Transaction
-inv: self.oclType = Transaction
-inv: self.oclIsKindOf(Transaction) = true
-inv: self.oclIsTypeOf(Transaction) = true
-inv: self.oclIsTypeOf(Burning) = false
-inv: self.oclIsKindOf(Burning) = false
-
-context Burning
-inv: self.oclType = Burning
-inv: self.oclIsKindOf(Transaction) = true
-inv: self.oclIsTypeOf(Transaction) = false
-inv: self.oclIsTypeOf(Burning) = true
-inv: self.oclIsKindOf(Burning) = true
-inv: self.oclIsTypeOf(Earning) = false
-inv: self.oclIsKindOf(Earning) = false
-
-context ApplePie
-inv: self.ingredient->forAll(oclIsKindOf(Apple))
-
-context PeachPie
-inv: self.ingredient->forAll(oclIsKindOf(Peach))
 
