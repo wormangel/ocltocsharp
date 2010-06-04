@@ -1,10 +1,11 @@
 import java_cup.runtime.*;
 
-
 /* Terminais (tokens vindos do lexer) */
 terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDES, EXCLUDES, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
 terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
-terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR, ID, STRING, NUMBER, TRUE, FALSE, SET, BAG, SEQUENCE, COLLECTION;
+terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR;
+terminal String		ID;
+terminal 			STRING, NUMBER, TRUE, FALSE, SET, BAG, SEQUENCE, COLLECTION;
 terminal			INTEGER, VOID, REAL, BOOLEAN, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE, PACKAGE, ENDPACKAGE;
 
 
@@ -15,7 +16,7 @@ non terminal			BoolValue, Number;
 //Expressions
 non terminal 			PostFixExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
 //Operators
-non terminal			MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
+non terminal String		MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
 //Conditional Expressions
 non terminal			ConditionalExpression, IfExpression, ImpliesExpression;
 //Collections
@@ -56,8 +57,17 @@ PreExpression ::= PRE DOISPONTOS OCLExpression
 
 OperationContext ::= ID QUATROPONTOS PropertyCall  
 				| ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier ;
-ClassifierContext ::= ID DOISPONTOS ID 
-				| ID;
+ClassifierContext ::= ID:i DOISPONTOS ID {:
+					if (!XmiParser.isValidClass(i)){
+						System.err.println("ERRO DE COMPILACAO, NAO EXISTE CLASSE " + i);
+						System.exit(0);
+					}
+				:} 
+				| ID:i {: 
+					if (!XmiParser.isValidClass(i)){
+						System.err.println("ERRO DE COMPILACAO, NAO EXISTE CLASSE " + i);
+						System.exit(0);}
+					:};
 
 // Expressões 
 OCLExpression ::= LogicalExpression;
@@ -66,9 +76,51 @@ LogicalExpression ::= RelationalExpression
 RelationalExpression  ::= AdditiveExpression
 				| AdditiveExpression RelationalOperator RelationalExpression;
 AdditiveExpression ::= MultiplicativeExpression
-				| MultiplicativeExpression AddOperator AdditiveExpression;
+				| MultiplicativeExpression:e1 AddOperator:o AdditiveExpression:e2
+				{:
+				if(e1 instanceof Integer && e2 instanceof Integer){
+						if(((String)o).equals("+")){
+							RESULT = new Integer( (int) ( ((Integer)e1).intValue() + ((Integer)e2).intValue() ));
+							System.out.println("ALOK1");
+						} else if (((String)o).equals("-")){
+							RESULT = new Integer( (int) ( ((Integer)e1).intValue() - ((Integer)e2).intValue() ));
+							System.out.println("ALOK2");
+						}
+			   	} else if( (e1 instanceof Double && e2 instanceof Double) ||
+				          (e1 instanceof Integer && e2 instanceof Double) ||
+				          (e1 instanceof Double && e2 instanceof Integer) ) {
+			   			if(((String)o).equals("+")){
+							RESULT = new Double( (double) ( ((Double)e1).doubleValue() + ((Double)e2).doubleValue() ));
+							System.out.println("ALOK1");
+						} else if (((String)o).equals("-")){
+							RESULT = new Double( (double) ( ((Double)e1).doubleValue() - ((Double)e2).doubleValue() ));
+							System.out.println("ALOK2");
+						}
+			   	}
+				:};
 MultiplicativeExpression ::= UnaryExpression
-				| UnaryExpression MultOperator MultiplicativeExpression;
+				| UnaryExpression:e1 MultOperator:o MultiplicativeExpression:e2
+				{:
+				if(e1 instanceof Integer && e2 instanceof Integer){
+						if(((String)o).equals("*")){
+							RESULT = new Integer( (int) ( ((Integer)e1).intValue() * ((Integer)e2).intValue() ));
+							System.out.println("ALOK1");
+						} else if (((String)o).equals("/")){
+							RESULT = new Integer( (int) ( ((Integer)e1).intValue() / ((Integer)e2).intValue() ));
+							System.out.println("ALOK2");
+						}
+			   	} else if( (e1 instanceof Double && e2 instanceof Double) ||
+				          (e1 instanceof Integer && e2 instanceof Double) ||
+				          (e1 instanceof Double && e2 instanceof Integer) ) {
+			   			if(((String)o).equals("*")){
+							RESULT = new Double( (double) ( ((Double)e1).doubleValue() + ((Double)e2).doubleValue() ));
+							System.out.println("ALOK1");
+						} else if (((String)o).equals("/")){
+							RESULT = new Double( (double) ( ((Double)e1).doubleValue() - ((Double)e2).doubleValue() ));
+							System.out.println("ALOK2");
+						}
+			   	}
+				:};
 UnaryExpression ::= PrimaryExpression
 				| UnaryOperator UnaryExpression
 				| PrimaryExpression UnaryOperator UnaryExpression;
@@ -122,12 +174,21 @@ FormalParameters ::= FormalParameters VIRGULA FormalParameter
 FormalParameter ::= ID DOISPONTOS TypeSpecifier
 				|PropertyCall;
 PathName ::= ID | ID PONTO PathName ;
-Number ::= INTEGER | REAL;
-BoolValue ::= TRUE | FALSE;
+Number ::= INTEGER:i
+			{:
+				RESULT = new Integer((Integer)i);
+			:}
+			| REAL:r
+			{:
+				RESULT = new Double((Double)r);
+			:};
+BoolValue ::= TRUE {: RESULT = new Boolean(true); :}| FALSE {: RESULT = new Boolean(false); :};
 //Operators
 LogicalOperator ::= AND | OR | XOR | IMPLIES;
 CollectionKind ::= SET | BAG | SEQUENCE | COLLECTION;
 RelationalOperator ::= MAIORQ | MAIORIGUAL | MENORQ | MENORIGUAL | IGUAL | DIFF;
-AddOperator ::= MAIS | MENOS;
-MultiplyOperator ::= VEZES | DIVIDIR;
+AddOperator ::= MAIS {: RESULT = new String("+"); :} 
+				| MENOS {: RESULT = new String("-"); :} ;
+MultiplyOperator ::= VEZES {: RESULT = new String("*"); :}
+			 		| DIVIDIR {: RESULT = new String("/"); :} ;
 UnaryOperator ::= NOT | MENOS | SETA;
