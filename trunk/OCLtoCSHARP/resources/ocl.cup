@@ -5,8 +5,11 @@ terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLI
 terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
 terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR;
 terminal String		ID;
-terminal 			STRING, NUMBER, TRUE, FALSE, SET, BAG, SEQUENCE, COLLECTION;
-terminal			INTEGER, VOID, REAL, BOOLEAN, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE, PACKAGE, ENDPACKAGE;
+terminal 			STRING, BOOLEAN, NUMBER, SET, BAG, SEQUENCE, COLLECTION;
+terminal Integer	INTEGER;
+terminal 			VOID, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE, PACKAGE, ENDPACKAGE;
+terminal Double		REAL;
+terminal Boolean	TRUE, FALSE;
 
 
 /* Não terminais */
@@ -59,13 +62,13 @@ OperationContext ::= ID QUATROPONTOS PropertyCall
 				| ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier ;
 ClassifierContext ::= ID:i DOISPONTOS ID {:
 					if (!XmiParser.isValidClass(i)){
-						System.err.println("ERRO DE COMPILACAO, NAO EXISTE CLASSE " + i);
+						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i);
 						System.exit(0);
 					}
 				:} 
 				| ID:i {: 
 					if (!XmiParser.isValidClass(i)){
-						System.err.println("ERRO DE COMPILACAO, NAO EXISTE CLASSE " + i);
+						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i);
 						System.exit(0);}
 					:};
 
@@ -79,47 +82,53 @@ AdditiveExpression ::= MultiplicativeExpression
 				| MultiplicativeExpression:e1 AddOperator:o AdditiveExpression:e2
 				{:
 				if(e1 instanceof Integer && e2 instanceof Integer){
-						if(((String)o).equals("+")){
+						if(o.equals("+")){
 							RESULT = new Integer( (int) ( ((Integer)e1).intValue() + ((Integer)e2).intValue() ));
 							System.out.println("ALOK1");
-						} else if (((String)o).equals("-")){
+						} else if (o.equals("-")){
 							RESULT = new Integer( (int) ( ((Integer)e1).intValue() - ((Integer)e2).intValue() ));
 							System.out.println("ALOK2");
 						}
 			   	} else if( (e1 instanceof Double && e2 instanceof Double) ||
 				          (e1 instanceof Integer && e2 instanceof Double) ||
 				          (e1 instanceof Double && e2 instanceof Integer) ) {
-			   			if(((String)o).equals("+")){
+			   			if(o.equals("+")){
 							RESULT = new Double( (double) ( ((Double)e1).doubleValue() + ((Double)e2).doubleValue() ));
 							System.out.println("ALOK1");
-						} else if (((String)o).equals("-")){
+						} else if (o.equals("-")){
 							RESULT = new Double( (double) ( ((Double)e1).doubleValue() - ((Double)e2).doubleValue() ));
 							System.out.println("ALOK2");
 						}
-			   	}
+			   	} else {
+			   			System.err.println("\n\nERRO DE COMPILACAO AdditiveExpression");
+			   			System.exit(0);
+	   			}
 				:};
 MultiplicativeExpression ::= UnaryExpression
 				| UnaryExpression:e1 MultOperator:o MultiplicativeExpression:e2
 				{:
 				if(e1 instanceof Integer && e2 instanceof Integer){
-						if(((String)o).equals("*")){
+						if(o.equals("*")){
 							RESULT = new Integer( (int) ( ((Integer)e1).intValue() * ((Integer)e2).intValue() ));
 							System.out.println("ALOK1");
-						} else if (((String)o).equals("/")){
+						} else if (o.equals("/")){
 							RESULT = new Integer( (int) ( ((Integer)e1).intValue() / ((Integer)e2).intValue() ));
 							System.out.println("ALOK2");
 						}
 			   	} else if( (e1 instanceof Double && e2 instanceof Double) ||
 				          (e1 instanceof Integer && e2 instanceof Double) ||
 				          (e1 instanceof Double && e2 instanceof Integer) ) {
-			   			if(((String)o).equals("*")){
+			   			if(o.equals("*")){
 							RESULT = new Double( (double) ( ((Double)e1).doubleValue() + ((Double)e2).doubleValue() ));
 							System.out.println("ALOK1");
-						} else if (((String)o).equals("/")){
+						} else if (o.equals("/")){
 							RESULT = new Double( (double) ( ((Double)e1).doubleValue() - ((Double)e2).doubleValue() ));
 							System.out.println("ALOK2");
 						}
-			   	}
+			   	} else {
+			   			System.err.println("\n\nERRO DE COMPILACAO MultiplicativeExpression");
+			   			System.exit(0);
+	   			}
 				:};
 UnaryExpression ::= PrimaryExpression
 				| UnaryOperator UnaryExpression
@@ -174,21 +183,12 @@ FormalParameters ::= FormalParameters VIRGULA FormalParameter
 FormalParameter ::= ID DOISPONTOS TypeSpecifier
 				|PropertyCall;
 PathName ::= ID | ID PONTO PathName ;
-Number ::= INTEGER:i
-			{:
-				RESULT = new Integer((Integer)i);
-			:}
-			| REAL:r
-			{:
-				RESULT = new Double((Double)r);
-			:};
-BoolValue ::= TRUE {: RESULT = new Boolean(true); :}| FALSE {: RESULT = new Boolean(false); :};
+Number ::= INTEGER | REAL;
+BoolValue ::= TRUE | FALSE;
 //Operators
 LogicalOperator ::= AND | OR | XOR | IMPLIES;
 CollectionKind ::= SET | BAG | SEQUENCE | COLLECTION;
 RelationalOperator ::= MAIORQ | MAIORIGUAL | MENORQ | MENORIGUAL | IGUAL | DIFF;
-AddOperator ::= MAIS {: RESULT = new String("+"); :} 
-				| MENOS {: RESULT = new String("-"); :} ;
-MultiplyOperator ::= VEZES {: RESULT = new String("*"); :}
-			 		| DIVIDIR {: RESULT = new String("/"); :} ;
+AddOperator ::= MAIS | MENOS;
+MultiplyOperator ::= VEZES | DIVIDIR;
 UnaryOperator ::= NOT | MENOS | SETA;
