@@ -90,10 +90,10 @@ comment = [\-][\-]~[\r]
 "#"			{System.out.print("( SUST )"); return symbol(sym.SHARP); }
 ";"			{System.out.print("( PONTOVIRGULA )"); return symbol(sym.PONTOVIRGULA); }
 "|"			{System.out.print("( BARRA )"); return symbol(sym.BARRA); }
-"+"			{System.out.print("( MAIS )"); return symbol(sym.MAIS); }
-"-"			{System.out.print("( MENOS )"); return symbol(sym.MENOS); }
-"*"			{System.out.print("( VEZES )"); return symbol(sym.VEZES); }
-"/"			{System.out.print("( DIVIDIR )"); return symbol(sym.DIVIDIR); }
+"+"			{System.out.print("( MAIS )"); return symbol(sym.MAIS, "+"); }
+"-"			{System.out.print("( MENOS )"); return symbol(sym.MENOS, "-"); }
+"*"			{System.out.print("( VEZES )"); return symbol(sym.VEZES, "*"); }
+"/"			{System.out.print("( DIVIDIR )"); return symbol(sym.DIVIDIR, "/"); }
 "true"		{System.out.print("( TRUE )"); return symbol(sym.TRUE, new Boolean(true)); }
 "false"		{System.out.print("( FALSE )"); return symbol(sym.FALSE, new Boolean(false)); }
 "void"		{System.out.print("( VOID )"); return symbol(sym.VOID); }
