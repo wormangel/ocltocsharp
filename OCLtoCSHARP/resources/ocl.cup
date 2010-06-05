@@ -62,7 +62,7 @@ OperationContext ::= ID QUATROPONTOS PropertyCall
 				| ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier ;
 ClassifierContext ::= ID:i DOISPONTOS ID {:
 					if (!XmiParser.isValidClass(i)){
-						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i " DEFINIDA NO XMI");
+						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i + " DEFINIDA NO XMI");
 						System.exit(0);
 					}
 				:} 
