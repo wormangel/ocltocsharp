@@ -62,13 +62,13 @@ OperationContext ::= ID QUATROPONTOS PropertyCall
 				| ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier ;
 ClassifierContext ::= ID:i DOISPONTOS ID {:
 					if (!XmiParser.isValidClass(i)){
-						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i);
+						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i " DEFINIDA NO XMI");
 						System.exit(0);
 					}
 				:} 
 				| ID:i {: 
 					if (!XmiParser.isValidClass(i)){
-						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i);
+						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i + " DEFINIDA NO XMI");
 						System.exit(0);}
 					:};
 
@@ -110,20 +110,16 @@ MultiplicativeExpression ::= UnaryExpression
 				if(e1 instanceof Integer && e2 instanceof Integer){
 						if(o.equals("*")){
 							RESULT = new Integer( (int) ( ((Integer)e1).intValue() * ((Integer)e2).intValue() ));
-							System.out.println("ALOK1");
 						} else if (o.equals("/")){
 							RESULT = new Integer( (int) ( ((Integer)e1).intValue() / ((Integer)e2).intValue() ));
-							System.out.println("ALOK2");
 						}
 			   	} else if( (e1 instanceof Double && e2 instanceof Double) ||
 				          (e1 instanceof Integer && e2 instanceof Double) ||
 				          (e1 instanceof Double && e2 instanceof Integer) ) {
 			   			if(o.equals("*")){
 							RESULT = new Double( (double) ( ((Double)e1).doubleValue() + ((Double)e2).doubleValue() ));
-							System.out.println("ALOK1");
 						} else if (o.equals("/")){
 							RESULT = new Double( (double) ( ((Double)e1).doubleValue() - ((Double)e2).doubleValue() ));
-							System.out.println("ALOK2");
 						}
 			   	} else {
 			   			System.err.println("\n\nERRO DE COMPILACAO MultiplicativeExpression");
