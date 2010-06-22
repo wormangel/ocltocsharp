@@ -101,8 +101,8 @@ comment = [\-][\-]~[\r]
 "\n"		{linha++;System.out.println(); System.out.print(linha+ "  ");}
 "\R"		{linha++;System.out.println(); System.out.print(linha+ "  ");}
 {ws}		{}
-{id}		{System.out.print("( ID , "+ yytext() + " )" ); return symbol(sym.ID, yytext()); }
-{string}	{System.out.print("( STR , "+yytext()+" )"  ); return symbol(sym.STRING, yytext()); }
-{real}		{System.out.print("( REAL , " +yytext()+" )"); return symbol(sym.REAL, new Double(yytext())); }
-{integer}	{System.out.print("( INT , " +yytext()+" )"); return symbol(sym.INTEGER, new Integer(yytext())); }
+{id}		{System.out.print("( ID , "+ yytext() + " )" ); return symbol(sym.ID, new Atributos(String.class, yytext())); }
+{string}	{System.out.print("( STR , "+yytext()+" )"  ); return symbol(sym.STRING, new Atributos(String.class, yytext())); }
+{real}		{System.out.print("( REAL , " +yytext()+" )"); return symbol(sym.REAL, new Atributos(Double.class, yytext())); }
+{integer}	{System.out.print("( INT , " +yytext()+" )"); return symbol(sym.INTEGER, new Atributos(Integer.class, yytext())); }
 {comment}	{}
