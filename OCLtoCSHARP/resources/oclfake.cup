@@ -1,25 +1,29 @@
 import java_cup.runtime.*;
 
-
 /* Terminais (tokens vindos do lexer) */
-terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDING, EXCLUDING, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
+terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDES, EXCLUDES, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
 terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
-terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR, ID, STRING, NUMBER, TRUE, FALSE, SET, BAG, SEQUENCE, COLLECTION;
-terminal			INTEGER, VOID, REAL, BOOLEAN, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE, PACKAGE, ENDPACKAGE;
+terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR;
+terminal Atributos	ID;
+terminal Atributos			STRING, BOOLEAN, NUMBER, SET, BAG, SEQUENCE, COLLECTION;
+terminal Atributos	INTEGER;
+terminal 			VOID, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE, PACKAGE, ENDPACKAGE;
+terminal Atributos		REAL;
+terminal Atributos	TRUE, FALSE;
 
 
 /* Não terminais */
-non terminal            OCLFile, OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
-non terminal			OperationName, FormalParameters,  ReturnType, FormalParameter, TypeSpecifier, CollectionType, CollectionKind,SimpleTypeSpecifier, PathName, OCLLiteral;
-non terminal			BoolValue, Number;
+non terminal	Atributos OCLFile, OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
+non terminal	Atributos			OperationName, FormalParameters,  ReturnType, FormalParameter, TypeSpecifier, CollectionType, CollectionKind,SimpleTypeSpecifier, PathName, OCLLiteral;
+non terminal	Atributos		BoolValue, Number;
 //Expressions
-non terminal 			CollectExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
+non terminal	Atributos		PostFixExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
 //Operators
-non terminal			CollectionOperators , MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
+non terminal	Atributos 		MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
 //Conditional Expressions
-non terminal			ConditionalExpression, IfExpression, ImpliesExpression;
+non terminal	Atributos			ConditionalExpression, IfExpression, ImpliesExpression;
 //Collections
-non terminal			CollectionItems, CollectionExpression, LiteralCollection, CollectionOperations, SelectOperation, ExistsOperation, IncludingOperation, ExcludingOperation, ForAllOperation, SizeOperation, CollectionParameters;
+non terminal	Atributos			CollectionItems, CollectionExpression, LiteralCollection, CollectionOperations, SelectOperation, ExistsOperation, IncludingOperation, ExcludingOperation, ForAllOperation, SizeOperation, CollectionParameters;
 
 precedence left IMPLIES;
 precedence left XOR;
@@ -56,33 +60,36 @@ PreExpression ::= PRE DOISPONTOS OCLExpression
 
 OperationContext ::= ID QUATROPONTOS PropertyCall  
 				| ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier ;
-ClassifierContext ::= ID DOISPONTOS ID 
-				| ID;
+ClassifierContext ::= ID:i DOISPONTOS ID {:
+				:} 
+				| ID:i {: 
+					:};
 
 // Expressões 
-OCLExpression ::= LogicalExpression | SETA CollectionExpression ;
-CollectionExpression ::= LogicalExpression
-				|LogicalExpression CollectionOperations CollectionExpression;
-LogicalExpression ::= RelationalExpression
+OCLExpression ::= LogicalExpression: e {: RESULT = new Atributos(null,null,e.Code); System.out.println(e.Code); :};
+LogicalExpression ::= RelationalExpression: e {: RESULT = new Atributos(null,null,e.Code); :}
 				| RelationalExpression LogicalOperator LogicalExpression;
-RelationalExpression  ::= AdditiveExpression
+RelationalExpression  ::= AdditiveExpression: e {: RESULT = new Atributos(null,null,e.Code); :}
 				| AdditiveExpression RelationalOperator RelationalExpression;
-AdditiveExpression ::= MultiplicativeExpression
-				| MultiplicativeExpression AddOperator AdditiveExpression;
-MultiplicativeExpression ::= UnaryExpression
-				| UnaryExpression MultOperator MultiplicativeExpression;
-UnaryExpression ::= CollectExpression
-				| UnaryOperator CollectExpression
-				| CollectExpression UnaryOperator UnaryExpression ;
-				
-CollectExpression ::= PrimaryExpression
-				| PrimaryExpression SETA CollectionOperators LogicalExpression;
-PrimaryExpression ::= LiteralCollection 
+AdditiveExpression ::= MultiplicativeExpression: e {: RESULT = new Atributos(null,null,e.Code); :}
+				| MultiplicativeExpression:e1 AddOperator:o AdditiveExpression:e2
+				{:
+				:};
+MultiplicativeExpression ::= UnaryExpression: e {: RESULT = new Atributos(null,null,e.Code); :}
+				| UnaryExpression:e1 MultOperator:o MultiplicativeExpression:e2
+				{:
+				:};
+UnaryExpression ::= PrimaryExpression: e {: RESULT = new Atributos(null,null,e.Code); :}
+				| UnaryOperator UnaryExpression
+				| PrimaryExpression UnaryOperator UnaryExpression;
+PrimaryExpression ::= LiteralCollection: l {: RESULT = new Atributos(null,null,l.Code); :}
 				| IfExpression
-				| LPAREN OCLExpression RPAREN;
+				| LPAREN OCLExpression RPAREN
+				| CollectionExpression
+				;
 
 LiteralCollection ::= Number
-				| BoolValue
+				| BoolValue: b {: RESULT = new Atributos(null,null,b.Code); :}
 				| STRING
 				| PropertyCall
 				| PropertyCall ATPRE;
@@ -90,12 +97,6 @@ IfExpression ::= IF LogicalExpression THEN  LogicalExpression  ELSE  LogicalExpr
 
 //Expressões em coleções				
 CollectionExpression ::= CollectionOperations;
-CollectionOperators ::= SELECT
-				| EXISTS
-				| INCLUDING
-				| EXCLUDING
-				| FORALL
-				| SIZE;
 CollectionOperations ::= SelectOperation
 				|ExistsOperation
 				|IncludingOperation
@@ -103,16 +104,17 @@ CollectionOperations ::= SelectOperation
 				|ForAllOperation
 				|SizeOperation;
 SelectOperation ::= SELECT LPAREN OCLExpression RPAREN
-				| SELECT LPAREN PathName BARRA OCLExpression RPAREN;
+				| SELECT LPAREN CollectionParameters DOISPONTOS TypeSpecifier  BARRA OCLExpression RPAREN
+				| SELECT LPAREN CollectionParameters BARRA OCLExpression RPAREN;
 ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| EXISTS LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				| EXISTS OCLExpression RPAREN;
-IncludingOperation ::= INCLUDING LPAREN ID RPAREN;
-ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN;
+				| EXISTS LPAREN OCLExpression RPAREN;
+IncludingOperation ::= INCLUDES LPAREN ID RPAREN;
+ExcludingOperation ::= EXCLUDES LPAREN ID RPAREN;
 ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				| FORALL OCLExpression RPAREN;
-SizeOperation ::= SIZE;
+				| FORALL LPAREN OCLExpression RPAREN;
+SizeOperation ::= SIZE LPAREN RPAREN;
 CollectionParameters ::= PropertyCall
 				| PropertyCall VIRGULA CollectionParameters;
 
@@ -131,11 +133,11 @@ FormalParameter ::= ID DOISPONTOS TypeSpecifier
 				|PropertyCall;
 PathName ::= ID | ID PONTO PathName ;
 Number ::= INTEGER | REAL;
-BoolValue ::= TRUE | FALSE;
+BoolValue ::= TRUE: t {: RESULT = new Atributos(null,null,"bool");:} | FALSE;
 //Operators
 LogicalOperator ::= AND | OR | XOR | IMPLIES;
 CollectionKind ::= SET | BAG | SEQUENCE | COLLECTION;
 RelationalOperator ::= MAIORQ | MAIORIGUAL | MENORQ | MENORIGUAL | IGUAL | DIFF;
 AddOperator ::= MAIS | MENOS;
 MultiplyOperator ::= VEZES | DIVIDIR;
-UnaryOperator ::= NOT | MENOS;
+UnaryOperator ::= NOT | MENOS | SETA;

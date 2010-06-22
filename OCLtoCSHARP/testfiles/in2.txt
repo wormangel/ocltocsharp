@@ -1,3 +1,4 @@
+context Cliente inv: true
 context Cliente inv: self.idade() >= 18
 context Cliente inv: idade() >= 18
 
