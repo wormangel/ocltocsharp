@@ -1,5 +1,14 @@
 import java_cup.runtime.*;
-action code {: private int count = 0; private String getId() { count++; return count + "";} :};
+action code {: private int count = 0;
+			private final int INCLUDING = 1;
+			private final int EXCLUDING = 2;
+			private final int EXISTS = 3;
+			private final int FORALL = 4;
+			private final int SELECT = 5;
+			private final int SIZE = 6; 
+			private String getId() { count++; return count + "";} 
+			private String caller;
+			:};
 
 /* Terminais (tokens vindos do lexer) */
 terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDING, EXCLUDING, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
@@ -84,16 +93,27 @@ MultiplicativeExpression ::= UnaryExpression: e {: RESULT = new Atributos(null,n
 				| UnaryExpression:e1 MultOperator:o MultiplicativeExpression:e2  {: RESULT = new Atributos(null,null,e1.Code + " " + o.Code + " " + e2.Code); :}
 				;
 
-UnaryExpression ::= PrimaryExpression: e {: RESULT = new Atributos(null,null,e.Code); :}
+UnaryExpression ::= PrimaryExpression: e {: RESULT = new Atributos(null,null,e.Code, e.ColKind); :}
 				| UnaryOperator:o UnaryExpression:e  {: RESULT = new Atributos(null,null,o.Code + e.Code); :}
 				| PrimaryExpression:e1 UnaryOperator:o UnaryExpression:e2 {: 
-						if(o.Value.equals("seta") RESULT = new Atributos(null,null,e1.Code + e2.Code); 
+						if(o.Code.equals("seta")) {
+							switch (e2.ColKind){
+								case EXCLUDING : break;
+								case INCLUDING : break;
+								case SIZE : break;
+								case FORALL : break;
+								case SELECT : break;
+								case EXISTS : break;
+								}
+							RESULT = new Atributos(null,null,e1.Code + e2.Code);
+							};
+							 
 						:};
 
 PrimaryExpression ::= LiteralCollection: l {: RESULT = new Atributos(null,null,l.Code); :}
 				| IfExpression:e  {: RESULT = new Atributos(null,null,e.Code); :}
 				| LPAREN OCLExpression:e RPAREN  {: RESULT = new Atributos(null,null,"("+e.Code+")"); :}
-				| CollectionExpression:c  {: RESULT = new Atributos(null,null,c.Code); :}
+				| CollectionExpression:c  {: RESULT = new Atributos(null,null,c.Code, c.ColKind); :}
 				;
 
 LiteralCollection ::= Number:n {: RESULT = new Atributos(null,null,n.Code);:}
@@ -106,13 +126,13 @@ IfExpression ::= IF LogicalExpression:e1 THEN  LogicalExpression:e2  ELSE  Logic
 				{: RESULT = new Atributos(null,null, e1.Code + "?" + e2.Code + " : " + e3.Code); :};	
 
 //Expressões em coleções				
-CollectionExpression ::= CollectionOperations:c {: RESULT = new Atributos(null,null,c.Code);:};
-CollectionOperations ::= SelectOperation:o {: RESULT = new Atributos(null,null,o.Code);:}
-				|ExistsOperation:o {: RESULT = new Atributos(null,null,o.Code);:}
-				|IncludingOperation:o {: RESULT = new Atributos(null,null,o.Code);:}
-				|ExcludingOperation:o {: RESULT = new Atributos(null,null,o.Code);:}
-				|ForAllOperation:o {: RESULT = new Atributos(null,null,o.Code);:}
-				|SizeOperation:o {: RESULT = new Atributos(null,null,o.Code);:};
+CollectionExpression ::= CollectionOperations:c {: RESULT = new Atributos(null,null,c.Code, c.ColKind);:};
+CollectionOperations ::= SelectOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
+				|ExistsOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
+				|IncludingOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
+				|ExcludingOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
+				|ForAllOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
+				|SizeOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:};
 				
 SelectOperation ::= SELECT LPAREN OCLExpression RPAREN
 				| SELECT LPAREN CollectionParameters DOISPONTOS TypeSpecifier  BARRA OCLExpression RPAREN
@@ -122,15 +142,16 @@ ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier 
 				| EXISTS LPAREN CollectionParameters BARRA OCLExpression RPAREN
 				| EXISTS LPAREN OCLExpression RPAREN;
 
-IncludingOperation ::= INCLUDING LPAREN ID RPAREN {: RESULT = new Atributos(null,null,".Contains(" + ID.Code + ")");:};
+IncludingOperation ::= INCLUDING LPAREN ID:i RPAREN {: 
+			RESULT = new Atributos(null,null,".Contains(" + i.Code + ")", INCLUDING);:};
 
-ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN;
+ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN ;
 
 ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
 				| FORALL LPAREN OCLExpression RPAREN;
 
-SizeOperation ::= SIZE LPAREN RPAREN {: RESULT = new Atributos(null,null,".size()");:} ;
+SizeOperation ::= SIZE LPAREN RPAREN {: RESULT = new Atributos(null,null,".Count()");:} ;
 
 CollectionParameters ::= PropertyCall
 				| PropertyCall VIRGULA CollectionParameters;
@@ -186,4 +207,4 @@ MultiplyOperator ::= VEZES {: RESULT = new Atributos(null,null,"*");:}
 		| DIVIDIR {: RESULT = new Atributos(null,null,"/");:};
 		
 UnaryOperator ::= NOT {: RESULT = new Atributos(null,null,"!");:}
-		| MENOS{: RESULT = new Atributos(null,null,"-");:} | SETA {: RESULT = new Atributos(null,null,"seta");:} ;
+		| SETA {: RESULT = new Atributos(null,null,"seta");:};
