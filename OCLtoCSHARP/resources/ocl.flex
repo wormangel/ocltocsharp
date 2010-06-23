@@ -51,8 +51,8 @@ comment = [\-][\-]~[\r]
 "else"		{if(debug) System.out.print("( ELSE )"); return symbol(sym.ELSE); }
 "endif"		{if(debug) System.out.print("( ENDIF )"); return symbol(sym.ENDIF); }
 "implies"	{if(debug) System.out.print("( IMPLIES )"); return symbol(sym.IMPLIES); }
-"includes"	{if(debug) System.out.print("( INCLUDES )"); return symbol(sym.INCLUDES); }
-"excludes"	{if(debug) System.out.print("( EXCLUDES )"); return symbol(sym.EXCLUDES); }
+"includes"	{if(debug) System.out.print("( INCLUDING )"); return symbol(sym.INCLUDING); }
+"excludes"	{if(debug) System.out.print("( EXCLUDES )"); return symbol(sym.EXCLUDING); }
 //"oclIsNew"	{if(debug) System.out.print("( OCLISNEW )"); return symbol(sym.OCLISNEW); }
 "@pre"		{if(debug) System.out.print("( ARROBAPRE )"); return symbol(sym.ATPRE); }
 "result"	{if(debug) System.out.print("( RESULT )"); return symbol(sym.RESULT); }
@@ -99,8 +99,8 @@ comment = [\-][\-]~[\r]
 "false"		{if(debug) System.out.print("( FALSE )"); return symbol(sym.FALSE); }
 "void"		{if(debug) System.out.print("( VOID )"); return symbol(sym.VOID); }
 "boolean"	{if(debug) System.out.print("( BOOLEAN )"); return symbol(sym.BOOLEAN); }
-"\n"		{linha++;if(debug) System.out.println(); if(debug) System.out.print(linha+ "  ");}
-"\R"		{linha++;if(debug) System.out.println(); if(debug) System.out.print(linha+ "  ");}
+"\n"		{linha++;if(debug) System.out.println(); if(debug) System.out.println(linha+ "  ");}
+"\R"		{linha++;if(debug) System.out.println(); if(debug) System.out.println(linha+ "  ");}
 {ws}		{}
 {id}		{if(debug) System.out.print("( ID , "+ yytext() + " )" ); return symbol(sym.ID, new Atributos(String.class, yytext(),"")); }
 {string}	{if(debug) System.out.print("( STR , "+yytext()+" )"  ); return symbol(sym.STRING, new Atributos(String.class, yytext(),"")); }
