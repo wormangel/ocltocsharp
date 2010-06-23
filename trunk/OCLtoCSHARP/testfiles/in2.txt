@@ -1,8 +1,17 @@
-context Cliente inv: true
-context Cliente inv: 20 >= 18
-context Cliente inv testaIdade: self.idade() >= 18
+context Cliente inv: 9 * 2 <= 18
+context Cliente inv: -18 <= 18
+context Cliente inv: 20 - 2 >= 18
+context Cliente inv: true and true
+context Cliente inv: true or true
+context Cliente inv: not true xor true
+context Cliente inv: 20 + 2 >= 18
+context Cliente inv testaIdade: self.idade() * 2 >= 18
 context Cliente inv: idade() >= 18
 
+
+
+context Membership
+inv: program.serviceLevel->includes( actualLevel )
 
 context Customer
 inv: age >= 18
