@@ -1,5 +1,6 @@
 context Cliente inv: true
-context Cliente inv: self.idade() >= 18
+context Cliente inv: 20 >= 18
+context Cliente inv testaIdade: self.idade() >= 18
 context Cliente inv: idade() >= 18
 
 
@@ -51,21 +52,8 @@ inv: 	gender = 'male' implies title = 'Mr.'
 context Unknown
 inv: Customer.name = 'Customer'
 
-context LoyaltyAccount::isEmpty()
-post: result = (points = 0)
-
-context Transaction::program():LoyaltyProgram
-post: result = self.card.membership.program
-
-context Transaction::program():LoyaltyProgram
-post: OclIsNew(result)
-
-context ProgramaFidelidade::cadastrar(c : Cliente) : void pre parametroOk: not cliente->includes(c) post resultadoOk: cliente = cliente@pre->includes(c)
-
 context LoyaltyProgram
 inv: serviceLevel->size() = 2
-
-
 
 context Customer
 inv: program->size() = cards->select( valid = true )->size()
@@ -74,14 +62,10 @@ context ProgramPartner
 inv: numberOfCustomers = loyaltyProgram.customer->size()
 
 context LoyaltyProgram
-inv: partners.deliveredServices.transaction.points->sum < 10000 
-
-context LoyaltyProgram
 inv: customer->forAll( age >= 18 )
 
 context Membership
 inv: customer.card.membership->includes( self )
-
 
 context Membership
 inv: program.serviceLevel->includes( actualLevel )
@@ -98,21 +82,8 @@ inv: self.serviceLevel->exists(name = 'basic')
 context LoyaltyProgram
 inv: self.customer->size() < 10000
 
-context LoyaltyProgram
-inv: self.serviceLevel->first.name = 'basic'
-
 context Membership
-inv: loyaltyAccount.isEmpty 
-
-context Membership
-inv: loyaltyAccount->isEmpty 
-
-
-context Membership
-inv: program.serviceLevel	->includes(actualLevel)
-
-context ServiceLevel
-inv: loyaltyProgram.partners->includesAll(availableServices.programPartner)
+inv: program.serviceLevel->includes(actualLevel)
 
 context CustomerCard
 inv: 	self.transactions->select( points > 100 )
@@ -160,6 +131,15 @@ inv: self.services.transaction->select(oclType = Burning)->sum
 <=
 self.services.transaction->select(oclType = Earning)->sum
 
+context LoyaltyAccount::isEmpty()
+post: result = (points = 0)
+
+context Transaction::program():LoyaltyProgram
+post: result = self.card.membership.program
+
+context Transaction::program():LoyaltyProgram
+post: OclIsNew(result)
+
 context LoyaltyProgram::enroll(c : Customer)
 pre : not customer->includes(c)
 post: customer = customer@pre->including(c)
@@ -167,3 +147,6 @@ post: customer = customer@pre->including(c)
 context Transaction::program():LoyaltyProgram
 post: result = self.card.membership.program
 
+context ProgramaFidelidade::cadastrar(c : Cliente) : void 
+pre parametroOk: not cliente->includes(c) 
+post resultadoOk: cliente = cliente@pre->includes(c)
