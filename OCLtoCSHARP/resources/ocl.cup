@@ -253,26 +253,26 @@ PathName ::= ID:i {: if (i.Value.equals("self")) RESULT = new Atributos(null,nul
 Number ::= INTEGER:i {:RESULT = new Atributos(i.Type,Integer.parseInt(i.Value.toString()),i.Value.toString());:}
 			| REAL:r {: RESULT = new Atributos(r.Type,Double.parseDouble(r.Value.toString()),r.Value.toString());:};
 
-BoolValue ::= TRUE: t {: RESULT = new Atributos(null,null,"true");:} 
-		| FALSE {: RESULT = new Atributos(null,null,"false");:};
+BoolValue ::= TRUE:t {: RESULT = new Atributos(t.Type,t.Value,"true");:} 
+			| FALSE:f {: RESULT = new Atributos(f.Type,f.Value,"false");:};
 		
 //Operators
 
-LogicalOperator ::= AND {: RESULT = new Atributos(null,null,"&&");:}
-		| OR{: RESULT = new Atributos(null,null,"||");:} 
-		| XOR {: RESULT = new Atributos(null,null,"^");:}
-		| IMPLIES {: RESULT = new Atributos(null,null,"implies"); :};
+LogicalOperator ::= AND {: RESULT = new Atributos(String.class,"&&","&&");:}
+				  | OR{: RESULT = new Atributos(String.class,"||","||");:} 
+				  | XOR {: RESULT = new Atributos(String.class,"^","^");:}
+				  | IMPLIES {: RESULT = new Atributos(String.class,"implies","implies"); :};
 		
-RelationalOperator ::= MAIORQ{: RESULT = new Atributos(null,null,">");:} 
-		| MAIORIGUAL{: RESULT = new Atributos(null,null,">=");:} 
-		| MENORQ{: RESULT = new Atributos(null,null,"<");:} 
-		| MENORIGUAL{: RESULT = new Atributos(null,null,"<=");:} 
-		| IGUAL{: RESULT = new Atributos(null,null,"==");:} 
-		| DIFF{: RESULT = new Atributos(null,null,"!=");:};
+RelationalOperator ::= MAIORQ{: RESULT = new Atributos(String.class,">",">");:} 
+					 | MAIORIGUAL{: RESULT = new Atributos(String.class,">=",">=");:} 
+					 | MENORQ{: RESULT = new Atributos(String.class,"<","<");:} 
+					 | MENORIGUAL{: RESULT = new Atributos(String.class,"<=","<=");:} 
+					 | IGUAL{: RESULT = new Atributos(String.class,"==","==");:} 
+					 | DIFF{: RESULT = new Atributos(String.class,"!=","!=");:};
 		
 AddOperator ::= MAIS {: RESULT = new Atributos(String.class,"+","+");:} | MENOS {: RESULT = new Atributos(String.class,"-","-");:};
 
 MultiplyOperator ::= VEZES {: RESULT = new Atributos(String.class,"*","*"); :} | DIVIDIR {: RESULT = new Atributos(String.class,"/","/"); :};
 
-UnaryOperator ::= NOT {: RESULT = new Atributos(null,null,"!");:}
-		| SETA {: RESULT = new Atributos(null,null,"seta");:};
+UnaryOperator ::= NOT {: RESULT = new Atributos(String.class,"!","!");:}
+				| SETA {: RESULT = new Atributos(String.class,"!","seta");:};
