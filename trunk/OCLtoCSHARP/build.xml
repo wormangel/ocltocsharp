@@ -68,7 +68,7 @@ www.lsd.ufcg.edu.br/~renato
 
 	<!-- Generates the parser from the parser.cup file (found in the resources directory) -->
 	<target name="generate_parser" description="Generates the CUP Parser">
-		<cup srcfile="${resources.dir}/oclfake.cup" 
+		<cup srcfile="${resources.dir}/ocl.cup" 
 			destdir="${src.dir}/"
 			interface="true" nowarn="true" />
 	</target>

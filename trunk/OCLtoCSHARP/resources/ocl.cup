@@ -1,29 +1,30 @@
 import java_cup.runtime.*;
+action code {: private int count = 0; private String getId() { count++; return count + "";} :};
 
 /* Terminais (tokens vindos do lexer) */
-terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDES, EXCLUDES, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
+terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDING, EXCLUDING, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
 terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
 terminal			PONTO, SHARP, PONTOVIRGULA, BARRA, MAIS, MENOS, VEZES, DIVIDIR;
-terminal String		ID;
-terminal 			STRING, BOOLEAN, NUMBER, SET, BAG, SEQUENCE, COLLECTION;
-terminal Integer	INTEGER;
+terminal Atributos	ID;
+terminal Atributos			STRING, BOOLEAN, NUMBER, SET, BAG, SEQUENCE, COLLECTION;
+terminal Atributos	INTEGER;
 terminal 			VOID, AND, OR, XOR, NOT, ENDIF, INTTYPE, REALTYPE, PACKAGE, ENDPACKAGE;
-terminal Double		REAL;
-terminal Boolean	TRUE, FALSE;
+terminal Atributos		REAL;
+terminal Atributos	TRUE, FALSE;
 
 
 /* Não terminais */
-non terminal            OCLFile, OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
-non terminal			OperationName, FormalParameters,  ReturnType, FormalParameter, TypeSpecifier, CollectionType, CollectionKind,SimpleTypeSpecifier, PathName, OCLLiteral;
-non terminal			BoolValue, Number;
+non terminal	Atributos OCLFile, OCLConstraints, Constraint, ContextDeclaration, ContextBody, Stereotype, OCLExpression, OperationContext, ClassifierContext;
+non terminal	Atributos			OperationName, FormalParameters,  ReturnType, FormalParameter, TypeSpecifier, CollectionType, SimpleTypeSpecifier, PathName, OCLLiteral;
+non terminal	Atributos		BoolValue, Number;
 //Expressions
-non terminal 			PostFixExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
+non terminal	Atributos		PostFixExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
 //Operators
-non terminal String		MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
+non terminal	Atributos 		MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
 //Conditional Expressions
-non terminal			ConditionalExpression, IfExpression, ImpliesExpression;
+non terminal	Atributos			ConditionalExpression, IfExpression, ImpliesExpression;
 //Collections
-non terminal			CollectionItems, CollectionExpression, LiteralCollection, CollectionOperations, SelectOperation, ExistsOperation, IncludingOperation, ExcludingOperation, ForAllOperation, SizeOperation, CollectionParameters;
+non terminal	Atributos			CollectionItems, CollectionExpression, LiteralCollection, CollectionOperations, SelectOperation, ExistsOperation, IncludingOperation, ExcludingOperation, ForAllOperation, SizeOperation, CollectionParameters;
 
 precedence left IMPLIES;
 precedence left XOR;
@@ -61,14 +62,14 @@ PreExpression ::= PRE DOISPONTOS OCLExpression
 OperationContext ::= ID QUATROPONTOS PropertyCall  
 				| ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier ;
 ClassifierContext ::= ID:i DOISPONTOS ID {:
-					if (!XmiParser.isValidClass(i)){
-						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i + " DEFINIDA NO XMI");
+					if (!XmiParser.isValidClass(i.Value.toString())){
+						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i.Value.toString() + " DEFINIDA NO XMI1");
 						System.exit(0);
 					}
 				:} 
 				| ID:i {: 
-					if (!XmiParser.isValidClass(i)){
-						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i + " DEFINIDA NO XMI");
+					if (!XmiParser.isValidClass(i.Value.toString())){
+						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i.Value.toString() + " DEFINIDA NO XMIz");
 						System.exit(0);}
 					:};
 
@@ -78,64 +79,68 @@ LogicalExpression ::= RelationalExpression
 				| RelationalExpression LogicalOperator LogicalExpression;
 RelationalExpression  ::= AdditiveExpression
 				| AdditiveExpression RelationalOperator RelationalExpression;
-AdditiveExpression ::= MultiplicativeExpression
+AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 				| MultiplicativeExpression:e1 AddOperator:o AdditiveExpression:e2
 				{:
-				if(e1 instanceof Integer && e2 instanceof Integer){
-						if(o.equals("+")){
-							RESULT = new Integer( (int) ( ((Integer)e1).intValue() + ((Integer)e2).intValue() ));
-							System.out.println("ALOK1");
-						} else if (o.equals("-")){
-							RESULT = new Integer( (int) ( ((Integer)e1).intValue() - ((Integer)e2).intValue() ));
-							System.out.println("ALOK2");
+				if(e1.Type == Integer.class && e2.Type == Integer.class){
+						if(o.Value.equals("+")){
+							RESULT = new Atributos(Integer.class, new Integer( (int) ( ((Integer)e1.Value).intValue() + ((Integer)e2.Value).intValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+							System.out.println(RESULT.Value.toString());
+						} else if (o.Value.equals("-")){
+							RESULT = new Atributos(Integer.class, new Integer( (int) ( ((Integer)e1.Value).intValue() - ((Integer)e2.Value).intValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+							System.out.println(RESULT.Value.toString());
 						}
-			   	} else if( (e1 instanceof Double && e2 instanceof Double) ||
-				          (e1 instanceof Integer && e2 instanceof Double) ||
-				          (e1 instanceof Double && e2 instanceof Integer) ) {
-			   			if(o.equals("+")){
-							RESULT = new Double( (double) ( ((Double)e1).doubleValue() + ((Double)e2).doubleValue() ));
-							System.out.println("ALOK1");
-						} else if (o.equals("-")){
-							RESULT = new Double( (double) ( ((Double)e1).doubleValue() - ((Double)e2).doubleValue() ));
-							System.out.println("ALOK2");
+			   	} else if( (e1.Type == Double.class && e2.Type == Double.class) ||
+				          (e1.Type == Integer.class && e2.Type == Double.class) ||
+				          (e1.Type == Double.class && e2.Type == Integer.class) ) {
+			   			if(o.Value.equals("+")){
+							RESULT = new Atributos(Double.class, new Double( (double) ( ((Double)e1.Value).doubleValue() + ((Double)e2.Value).doubleValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+							System.out.println(RESULT.Value.toString());
+						} else if (o.Value.equals("-")){
+							RESULT = new Atributos(Double.class, new Double( (double) ( ((Double)e1.Value).doubleValue() - ((Double)e2.Value).doubleValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+							System.out.println(RESULT.Value.toString());
 						}
 			   	} else {
 			   			System.err.println("\n\nERRO DE COMPILACAO AdditiveExpression");
 			   			System.exit(0);
 	   			}
 				:};
-MultiplicativeExpression ::= UnaryExpression
+MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 				| UnaryExpression:e1 MultOperator:o MultiplicativeExpression:e2
 				{:
-				if(e1 instanceof Integer && e2 instanceof Integer){
-						if(o.equals("*")){
-							RESULT = new Integer( (int) ( ((Integer)e1).intValue() * ((Integer)e2).intValue() ));
-						} else if (o.equals("/")){
-							RESULT = new Integer( (int) ( ((Integer)e1).intValue() / ((Integer)e2).intValue() ));
+				if(e1.Type == Integer.class && e2.Type == Integer.class){
+						if(o.Value.equals("*")){
+							RESULT = new Atributos(Integer.class, new Integer( (int) ( ((Integer)e1.Value).intValue() * ((Integer)e2.Value).intValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+							System.out.println("ALOK1");
+						} else if (o.Value.equals("/")){
+							RESULT = new Atributos(Integer.class, new Integer( (int) ( ((Integer)e1.Value).intValue() / ((Integer)e2.Value).intValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+							System.out.println("ALOK2");
 						}
-			   	} else if( (e1 instanceof Double && e2 instanceof Double) ||
-				          (e1 instanceof Integer && e2 instanceof Double) ||
-				          (e1 instanceof Double && e2 instanceof Integer) ) {
-			   			if(o.equals("*")){
-							RESULT = new Double( (double) ( ((Double)e1).doubleValue() + ((Double)e2).doubleValue() ));
-						} else if (o.equals("/")){
-							RESULT = new Double( (double) ( ((Double)e1).doubleValue() - ((Double)e2).doubleValue() ));
+			   	} else if( (e1.Type == Double.class && e2.Type == Double.class) ||
+				          (e1.Type == Integer.class && e2.Type == Double.class) ||
+				          (e1.Type == Double.class && e2.Type == Integer.class) ) {
+			   			if(o.Value.equals("*")){
+							RESULT = new Atributos(Double.class, new Double( (double) ( ((Double)e1.Value).doubleValue() * ((Double)e2.Value).doubleValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+							System.out.println("ALOK1");
+						} else if (o.Value.equals("/")){
+							RESULT = new Atributos(Double.class, new Double( (double) ( ((Double)e1.Value).doubleValue() / ((Double)e2.Value).doubleValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+							System.out.println("ALOK2");
 						}
 			   	} else {
 			   			System.err.println("\n\nERRO DE COMPILACAO MultiplicativeExpression");
 			   			System.exit(0);
 	   			}
 				:};
-UnaryExpression ::= PrimaryExpression
+UnaryExpression ::= PrimaryExpression:p {: RESULT = p; :}
 				| UnaryOperator UnaryExpression
 				| PrimaryExpression UnaryOperator UnaryExpression;
-PrimaryExpression ::= LiteralCollection 
+PrimaryExpression ::= LiteralCollection:l {: RESULT = l; :}
 				| IfExpression
 				| LPAREN OCLExpression RPAREN
 				| CollectionExpression
 				;
 
-LiteralCollection ::= Number
+LiteralCollection ::= Number:n {: RESULT = n; :}
 				| BoolValue
 				| STRING
 				| PropertyCall
@@ -156,8 +161,8 @@ SelectOperation ::= SELECT LPAREN OCLExpression RPAREN
 ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| EXISTS LPAREN CollectionParameters BARRA OCLExpression RPAREN
 				| EXISTS LPAREN OCLExpression RPAREN;
-IncludingOperation ::= INCLUDES LPAREN ID RPAREN;
-ExcludingOperation ::= EXCLUDES LPAREN ID RPAREN;
+IncludingOperation ::= INCLUDING LPAREN ID RPAREN;
+ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN;
 ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
 				| FORALL LPAREN OCLExpression RPAREN;
@@ -179,12 +184,13 @@ FormalParameters ::= FormalParameters VIRGULA FormalParameter
 FormalParameter ::= ID DOISPONTOS TypeSpecifier
 				|PropertyCall;
 PathName ::= ID | ID PONTO PathName ;
-Number ::= INTEGER | REAL;
+Number ::= INTEGER:i {:RESULT = new Atributos(i.Type,Integer.parseInt(i.Value.toString()),i.Value.toString());:}
+			| REAL:r {: RESULT = new Atributos(r.Type,Double.parseDouble(r.Value.toString()),r.Value.toString());:};
 BoolValue ::= TRUE | FALSE;
 //Operators
 LogicalOperator ::= AND | OR | XOR | IMPLIES;
 CollectionKind ::= SET | BAG | SEQUENCE | COLLECTION;
 RelationalOperator ::= MAIORQ | MAIORIGUAL | MENORQ | MENORIGUAL | IGUAL | DIFF;
-AddOperator ::= MAIS | MENOS;
-MultiplyOperator ::= VEZES | DIVIDIR;
+AddOperator ::= MAIS {: RESULT = new Atributos(String.class,"+","+");:} | MENOS {: RESULT = new Atributos(String.class,"-","-");:};
+MultiplyOperator ::= VEZES {: RESULT = new Atributos(String.class,"*","*"); :} | DIVIDIR {: RESULT = new Atributos(String.class,"/","/"); :};
 UnaryOperator ::= NOT | MENOS | SETA;
