@@ -95,8 +95,8 @@ comment = [\-][\-]~[\r]
 "-"			{if(debug) System.out.print("( MENOS )"); return symbol(sym.MENOS, "-"); }
 "*"			{if(debug) System.out.print("( VEZES )"); return symbol(sym.VEZES, "*"); }
 "/"			{if(debug) System.out.print("( DIVIDIR )"); return symbol(sym.DIVIDIR, "/"); }
-"true"		{if(debug) System.out.print("( TRUE )"); return symbol(sym.TRUE); }
-"false"		{if(debug) System.out.print("( FALSE )"); return symbol(sym.FALSE); }
+"true"		{if(debug) System.out.print("( TRUE )"); return symbol(sym.TRUE, new Atributos(Boolean.class, true, "")); }
+"false"		{if(debug) System.out.print("( FALSE )"); return symbol(sym.FALSE, new Atributos(Boolean.class, false, "")); }
 "void"		{if(debug) System.out.print("( VOID )"); return symbol(sym.VOID); }
 "boolean"	{if(debug) System.out.print("( BOOLEAN )"); return symbol(sym.BOOLEAN); }
 "\n"		{linha++;if(debug) System.out.println(); if(debug) System.out.println(linha+ "  ");}
