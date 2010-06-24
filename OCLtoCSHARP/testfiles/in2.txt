@@ -1,4 +1,4 @@
-context Cliente inv: age >= 18 + b
+context Cliente inv: true xor 2
 
 context Membership
 inv: program.serviceLevel->includes( actualLevel 

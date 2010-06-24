@@ -97,12 +97,25 @@ ClassifierContext ::= ID:i DOISPONTOS ID {:
 
 OCLExpression ::= LogicalExpression: e {: RESULT = new Atributos(null,null,e.Code);:};
 
-LogicalExpression ::= RelationalExpression: e {: RESULT = new Atributos(null,null,e.Code); :}
+LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 				| RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2 
-				{:	if(o.Code.equals("implies")){ RESULT = new Atributos(null,null, "!(" + e1.Code + " or " + e2.Code );} 
-				else RESULT = new Atributos(null,null,e1.Code + " " + o.Code + " " + e2.Code); :};
+				{:	
+					if(e1.Type != Boolean.class || e2.Type != Boolean.class){
+						System.err.println("\n\nERRO DE COMPILACAO LogicalExpression");
+						System.exit(0);
+					}
+					if(o.Value.equals("&&")){
+						RESULT = new Atributos(Boolean.class, new Boolean( (boolean) ( ((Boolean)e1.Value).booleanValue() && ((Boolean)e2.Value).booleanValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+					} else if (o.Value.equals("||")){
+						RESULT = new Atributos(Boolean.class, new Boolean( (boolean) ( ((Boolean)e1.Value).booleanValue() || ((Boolean)e2.Value).booleanValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+					} else if (o.Value.equals("^")){
+						RESULT = new Atributos(Boolean.class, new Boolean( (boolean) ( ((Boolean)e1.Value).booleanValue() ^ ((Boolean)e2.Value).booleanValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+					} else if (o.Value.equals("implies")){
+						RESULT = new Atributos(null,null, "!(" + e1.Code + " or " + e2.Code );
+					}
+				:};
 				
-RelationalExpression  ::= AdditiveExpression: e {: RESULT = new Atributos(null,null,e.Code); :}
+RelationalExpression  ::= AdditiveExpression: e {: RESULT = e; :}
 				| AdditiveExpression:e1 RelationalOperator:o RelationalExpression:e2 {: RESULT = new Atributos(null,null,e1.Code + " " + o.Code +  " " +e2.Code); :};
 				
 AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
@@ -182,7 +195,7 @@ PrimaryExpression ::= LiteralCollection:l {: RESULT = l; :}
 				;
 
 LiteralCollection ::= Number:n {: RESULT = n; :}
-				| BoolValue: b {: RESULT = new Atributos(null,null,b.Code); :}
+				| BoolValue:b {: RESULT = b; :}
 				| STRING:s {: RESULT = new Atributos(null,null,s.Value.toString());:} 
 				| PropertyCall:p {: RESULT = new Atributos(null,null,p.Code);:}
 				| PropertyCall:p ATPRE;
