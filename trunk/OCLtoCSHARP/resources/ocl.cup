@@ -1,5 +1,14 @@
 import java_cup.runtime.*;
-action code {: private int count = 0; private String getId() { count++; return count + "";} :};
+action code {: private int count = 0;
+			private final int INCLUDING = 1;
+			private final int EXCLUDING = 2;
+			private final int EXISTS = 3;
+			private final int FORALL = 4;
+			private final int SELECT = 5;
+			private final int SIZE = 6; 
+			private String getId() { count++; return count + "";} 
+			private String caller;
+			:};
 
 /* Terminais (tokens vindos do lexer) */
 terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDING, EXCLUDING, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
@@ -40,18 +49,28 @@ precedence left PONTO, SETA;
 
 /* Regras */
 // Regra Inicial
+
 start with OCLFile;
+
 // Regras para constraints
+
 OCLFile ::= PACKAGE ID OCLConstraints ENDPACKAGE
 				| OCLConstraints;
-OCLConstraints ::= Constraint OCLConstraints | Constraint;
-Constraint ::= ContextDeclaration ContextBody;
+				
+OCLConstraints ::= Constraint:c OCLConstraints:cs {: RESULT = new Atributos(null,null, c.Code + " " + cs.Code); :}| Constraint:c {: RESULT = new Atributos(null,null, c.Code);:};
+
+Constraint ::= ContextDeclaration:cd ContextBody:cb {: System.out.println(cb.Code);  RESULT = new Atributos(null,null, cb.Code); :};
+
 ContextDeclaration ::= CONTEXT OperationContext 
 				| CONTEXT ClassifierContext;
-ContextBody ::= InvExpression
+				
+ContextBody ::= InvExpression: i {: RESULT = new Atributos(null,null, i.Code); :}
 				| PreExpression;
-InvExpression ::= INV DOISPONTOS OCLExpression
-				| INV ID DOISPONTOS OCLExpression;
+				
+InvExpression ::= INV DOISPONTOS OCLExpression:e 
+				{:	RESULT = new Atributos(null,null, "private void checkInv" + getId() + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Inv violada\");" + " }"); :}
+				| INV ID:i DOISPONTOS OCLExpression:e {: RESULT = new Atributos(null,null, "private void checkInv" + i.Value.toString()+ "() { " + "if (!(" + e.Code +"))  throw new Exception(\"Inv violada\");" + " }"); :};
+
 PreExpression ::= PRE DOISPONTOS OCLExpression
 				| PRE ID DOISPONTOS OCLExpression
 				| POS DOISPONTOS OCLExpression
@@ -61,6 +80,7 @@ PreExpression ::= PRE DOISPONTOS OCLExpression
 
 OperationContext ::= ID QUATROPONTOS PropertyCall  
 				| ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier ;
+				
 ClassifierContext ::= ID:i DOISPONTOS ID {:
 					if (!XmiParser.isValidClass(i.Value.toString())){
 						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i.Value.toString() + " DEFINIDA NO XMI1");
@@ -74,11 +94,17 @@ ClassifierContext ::= ID:i DOISPONTOS ID {:
 					:};
 
 // Expressões 
-OCLExpression ::= LogicalExpression;
-LogicalExpression ::= RelationalExpression
-				| RelationalExpression LogicalOperator LogicalExpression;
-RelationalExpression  ::= AdditiveExpression
-				| AdditiveExpression RelationalOperator RelationalExpression;
+
+OCLExpression ::= LogicalExpression: e {: RESULT = new Atributos(null,null,e.Code);:};
+
+LogicalExpression ::= RelationalExpression: e {: RESULT = new Atributos(null,null,e.Code); :}
+				| RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2 
+				{:	if(o.Code.equals("implies")){ RESULT = new Atributos(null,null, "!(" + e1.Code + " or " + e2.Code );} 
+				else RESULT = new Atributos(null,null,e1.Code + " " + o.Code + " " + e2.Code); :};
+				
+RelationalExpression  ::= AdditiveExpression: e {: RESULT = new Atributos(null,null,e.Code); :}
+				| AdditiveExpression:e1 RelationalOperator:o RelationalExpression:e2 {: RESULT = new Atributos(null,null,e1.Code + " " + o.Code +  " " +e2.Code); :};
+				
 AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 				| MultiplicativeExpression:e1 AddOperator:o AdditiveExpression:e2
 				{:
@@ -105,6 +131,7 @@ AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 			   			System.exit(0);
 	   			}
 				:};
+				
 MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 				| UnaryExpression:e1 MultOperator:o MultiplicativeExpression:e2
 				{:
@@ -131,66 +158,121 @@ MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 			   			System.exit(0);
 	   			}
 				:};
-UnaryExpression ::= PrimaryExpression:p {: RESULT = p; :}
-				| UnaryOperator UnaryExpression
-				| PrimaryExpression UnaryOperator UnaryExpression;
+				
+UnaryExpression ::= PrimaryExpression: e {: RESULT = new Atributos(e.Type,e.Value,e.Code, e.ColKind); :}
+				| UnaryOperator:o UnaryExpression:e  {: RESULT = new Atributos(null,null,o.Code + e.Code); :}
+				| PrimaryExpression:e1 UnaryOperator:o UnaryExpression:e2 {: 
+						if(o.Code.equals("seta")) {
+							switch (e2.ColKind){
+								case EXCLUDING : break;
+								case INCLUDING : break;
+								case SIZE : break;
+								case FORALL : break;
+								case SELECT : break;
+								case EXISTS : break;
+								}
+							RESULT = new Atributos(null,null,e1.Code + e2.Code);
+							};
+							 
+						:};
 PrimaryExpression ::= LiteralCollection:l {: RESULT = l; :}
-				| IfExpression
-				| LPAREN OCLExpression RPAREN
-				| CollectionExpression
+				| IfExpression:e  {: RESULT = new Atributos(null,null,e.Code); :}
+				| LPAREN OCLExpression:e RPAREN  {: RESULT = new Atributos(null,null,"("+e.Code+")"); :}
+				| CollectionExpression:c  {: RESULT = new Atributos(null,null,c.Code, c.ColKind); :}
 				;
 
 LiteralCollection ::= Number:n {: RESULT = n; :}
-				| BoolValue
-				| STRING
-				| PropertyCall
-				| PropertyCall ATPRE;
-IfExpression ::= IF LogicalExpression THEN  LogicalExpression  ELSE  LogicalExpression ENDIF;	
+				| BoolValue: b {: RESULT = new Atributos(null,null,b.Code); :}
+				| STRING:s {: RESULT = new Atributos(null,null,s.Value.toString());:} 
+				| PropertyCall:p {: RESULT = new Atributos(null,null,p.Code);:}
+				| PropertyCall:p ATPRE;
+				
+IfExpression ::= IF LogicalExpression:e1 THEN  LogicalExpression:e2  ELSE  LogicalExpression:e3 ENDIF
+				{: RESULT = new Atributos(null,null, e1.Code + "?" + e2.Code + " : " + e3.Code); :};		
 
-//Expressões em coleções				
-CollectionExpression ::= CollectionOperations;
-CollectionOperations ::= SelectOperation
-				|ExistsOperation
-				|IncludingOperation
-				|ExcludingOperation
-				|ForAllOperation
-				|SizeOperation;
+//Expressões em coleções	
+			
+CollectionExpression ::= CollectionOperations:c {: RESULT = new Atributos(null,null,c.Code, c.ColKind);:};
+
+CollectionOperations ::= SelectOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
+				|ExistsOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
+				|IncludingOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
+				|ExcludingOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
+				|ForAllOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
+				|SizeOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:};
+				
 SelectOperation ::= SELECT LPAREN OCLExpression RPAREN
 				| SELECT LPAREN CollectionParameters DOISPONTOS TypeSpecifier  BARRA OCLExpression RPAREN
 				| SELECT LPAREN CollectionParameters BARRA OCLExpression RPAREN;
+
 ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| EXISTS LPAREN CollectionParameters BARRA OCLExpression RPAREN
 				| EXISTS LPAREN OCLExpression RPAREN;
-IncludingOperation ::= INCLUDING LPAREN ID RPAREN;
-ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN;
+
+IncludingOperation ::= INCLUDING LPAREN ID:i RPAREN {: 
+			RESULT = new Atributos(null,null,".Contains(" + i.Code + ")", INCLUDING);:};
+
+ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN ;
+
 ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
 				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
 				| FORALL LPAREN OCLExpression RPAREN;
-SizeOperation ::= SIZE LPAREN RPAREN;
+
+SizeOperation ::= SIZE LPAREN RPAREN {: RESULT = new Atributos(null,null,".Count()");:} ;
+
 CollectionParameters ::= PropertyCall
 				| PropertyCall VIRGULA CollectionParameters;
 
 
 //Tipos
-TypeSpecifier ::= PathName | INTTYPE | REALTYPE | VOID | STRING |  BOOLEAN ;
+
+TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,null,p.Code);:}
+		| INTTYPE{: RESULT = new Atributos(null,null,"int");:} 
+		| REALTYPE{: RESULT = new Atributos(null,null,"double");:} 
+		| VOID{: RESULT = new Atributos(null,null,"void");:} 
+		| STRING{: RESULT = new Atributos(null,null,"string");:}
+		| BOOLEAN{: RESULT = new Atributos(null,null,"boolean");:} ;
+		
 //Literais
-PropertyCall ::= RESULT
-				| PathName
-				| PathName LPAREN RPAREN
-				| PathName LPAREN FormalParameters RPAREN
-				| PathName PONTO PropertyCall;
-FormalParameters ::= FormalParameters VIRGULA FormalParameter
-				|FormalParameter;				
-FormalParameter ::= ID DOISPONTOS TypeSpecifier
-				|PropertyCall;
-PathName ::= ID | ID PONTO PathName ;
+
+PropertyCall ::= RESULT {: RESULT = new Atributos(null,null,"result");:}
+				| PathName:p {: RESULT = new Atributos(null,null,p.Code);:}
+				| PathName:p LPAREN RPAREN {: RESULT = new Atributos(null,null,p.Code + "()");:}
+				| PathName:p LPAREN FormalParameters:fp RPAREN {: RESULT = new Atributos(null,null,p.Code + " (" + fp.Code + ")");:}
+				| PathName:p PONTO PropertyCall:p2 {: RESULT = new Atributos(null,null,p.Code + "." + p2.Code);:};
+				
+FormalParameters ::= FormalParameters:f VIRGULA FormalParameter:f2 {: RESULT = new Atributos(null,null, f.Code + "," + f2.Code);:}
+				|FormalParameter:f {: RESULT = new Atributos(null,null,f.Code);:};	
+							
+FormalParameter ::= ID:i DOISPONTOS TypeSpecifier:t {: RESULT = new Atributos(null,null,t.Code + " " + i.Code );:}
+				|PropertyCall:p {: RESULT = new Atributos(null,null,p.Code);:};
+				
+PathName ::= ID:i {: if (i.Value.equals("self")) RESULT = new Atributos(null,null,"this"); else RESULT = new Atributos(null,null,i.Value.toString());:} 
+		| ID:i PONTO PathName:p {: if (i.Value.equals("self")) RESULT = new Atributos(null,null,"this." + p.Code); else RESULT = new Atributos(null,null,i.Value.toString() + "." + p.Code);:};
+		
 Number ::= INTEGER:i {:RESULT = new Atributos(i.Type,Integer.parseInt(i.Value.toString()),i.Value.toString());:}
 			| REAL:r {: RESULT = new Atributos(r.Type,Double.parseDouble(r.Value.toString()),r.Value.toString());:};
-BoolValue ::= TRUE | FALSE;
+
+BoolValue ::= TRUE: t {: RESULT = new Atributos(null,null,"true");:} 
+		| FALSE {: RESULT = new Atributos(null,null,"false");:};
+		
 //Operators
-LogicalOperator ::= AND | OR | XOR | IMPLIES;
-CollectionKind ::= SET | BAG | SEQUENCE | COLLECTION;
-RelationalOperator ::= MAIORQ | MAIORIGUAL | MENORQ | MENORIGUAL | IGUAL | DIFF;
+
+LogicalOperator ::= AND {: RESULT = new Atributos(null,null,"&&");:}
+		| OR{: RESULT = new Atributos(null,null,"||");:} 
+		| XOR {: RESULT = new Atributos(null,null,"^");:}
+		| IMPLIES {: RESULT = new Atributos(null,null,"implies"); :};
+		
+RelationalOperator ::= MAIORQ{: RESULT = new Atributos(null,null,">");:} 
+		| MAIORIGUAL{: RESULT = new Atributos(null,null,">=");:} 
+		| MENORQ{: RESULT = new Atributos(null,null,"<");:} 
+		| MENORIGUAL{: RESULT = new Atributos(null,null,"<=");:} 
+		| IGUAL{: RESULT = new Atributos(null,null,"==");:} 
+		| DIFF{: RESULT = new Atributos(null,null,"!=");:};
+		
 AddOperator ::= MAIS {: RESULT = new Atributos(String.class,"+","+");:} | MENOS {: RESULT = new Atributos(String.class,"-","-");:};
+
 MultiplyOperator ::= VEZES {: RESULT = new Atributos(String.class,"*","*"); :} | DIVIDIR {: RESULT = new Atributos(String.class,"/","/"); :};
-UnaryOperator ::= NOT | MENOS | SETA;
+
+UnaryOperator ::= NOT {: RESULT = new Atributos(null,null,"!");:}
+		| SETA {: RESULT = new Atributos(null,null,"seta");:};
