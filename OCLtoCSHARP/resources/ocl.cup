@@ -1,13 +1,25 @@
 import java_cup.runtime.*;
-action code {: private int count = 0;
+action code {: 
 			private final int INCLUDING = 1;
 			private final int EXCLUDING = 2;
 			private final int EXISTS = 3;
 			private final int FORALL = 4;
 			private final int SELECT = 5;
 			private final int SIZE = 6; 
-			private String getId() { count++; return count + "";} 
+			private int invCount = 0;
+			private String getInvName() { invCount++; return "CheckInv" + invCount;}
+			private int preCount = 0;
+			private String getPreName() { preCount++; return "CheckPre" + preCount;}
+			private int posCount = 0;
+			private String getPosName() { posCount++; return "CheckPos" + posCount;} 
+			private int forAllCount = 0;
+			private String getForAllName() { forAllCount++; return "ForAll"+forAllCount; }
+			private int existsCount = 0;
+			private String getExistsName() { existsCount++; return "Exists"+existsCount; }
+			private int selectCount = 0;
+			private String getSelectName() { selectCount++; return "Select"+selectCount; } 
 			private String caller;
+			private void GenAuxMethod(String code) { System.out.println(code);}
 			:};
 
 /* Terminais (tokens vindos do lexer) */
@@ -57,26 +69,34 @@ start with OCLFile;
 OCLFile ::= PACKAGE ID OCLConstraints ENDPACKAGE
 				| OCLConstraints;
 				
-OCLConstraints ::= Constraint:c OCLConstraints:cs {: RESULT = new Atributos(null,null, c.Code + " " + cs.Code); :}| Constraint:c {: RESULT = new Atributos(null,null, c.Code);:};
+OCLConstraints ::= Constraint OCLConstraints | Constraint;
 
-Constraint ::= ContextDeclaration:cd ContextBody:cb {: System.out.println(cb.Code);  RESULT = new Atributos(null,null, cb.Code); :};
+Constraint ::= ContextDeclaration ContextBody;
 
 ContextDeclaration ::= CONTEXT OperationContext 
 				| CONTEXT ClassifierContext;
 				
-ContextBody ::= InvExpression: i {: RESULT = new Atributos(null,null, i.Code); :}
-				| PreExpression;
+ContextBody ::= InvExpression: i {: System.out.println(i.Code); :}
+				| PreExpression: i {: System.out.println(i.Code); :};
 				
 InvExpression ::= INV DOISPONTOS OCLExpression:e 
-				{:	RESULT = new Atributos(null,null, "private void checkInv" + getId() + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Inv violada\");" + " }"); :}
+				{:	RESULT = new Atributos(null,null, "private void " + getInvName() + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Inv violada\");" + " }"); :}
 				| INV ID:i DOISPONTOS OCLExpression:e {: RESULT = new Atributos(null,null, "private void checkInv" + i.Value.toString()+ "() { " + "if (!(" + e.Code +"))  throw new Exception(\"Inv violada\");" + " }"); :};
 
-PreExpression ::= PRE DOISPONTOS OCLExpression
-				| PRE ID DOISPONTOS OCLExpression
-				| POS DOISPONTOS OCLExpression
-				| POS ID DOISPONTOS OCLExpression
-				| PRE DOISPONTOS OCLExpression POS DOISPONTOS OCLExpression
-				| PRE ID DOISPONTOS OCLExpression POS ID DOISPONTOS OCLExpression;
+PreExpression ::= PRE DOISPONTOS OCLExpression:e 
+				  {:RESULT = new Atributos(null,null, "private void " +getPreName() + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }"); :}
+				| PRE ID:i DOISPONTOS OCLExpression:e 
+				  {:RESULT = new Atributos(null,null, "private void CheckPre" +i.Code + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }"); :}
+				| POS DOISPONTOS OCLExpression:e 
+				  {:RESULT = new Atributos(null,null, "private void " +getPosName() + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"); :}
+				| POS ID:i DOISPONTOS OCLExpression:e 
+				  {:RESULT = new Atributos(null,null, "private void CheckPos" + i.Code + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"); :}
+				| PRE DOISPONTOS OCLExpression:e1 POS DOISPONTOS OCLExpression:e2 
+				  {:RESULT = new Atributos(null,null, "private void " +getPreName() + "() { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
+						+"private void " + getPosName() + "() { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" ); :}
+				| PRE ID:i1 DOISPONTOS OCLExpression:e1 POS ID:i2 DOISPONTOS OCLExpression:e2
+				  {: RESULT = new Atributos(null,null, "private void CheckPre" + i1.Code + "() { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
+						+"private void CheckPos" + i2.Code + "() { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" ); :};
 
 OperationContext ::= ID QUATROPONTOS PropertyCall  
 				| ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier ;
@@ -177,14 +197,15 @@ UnaryExpression ::= PrimaryExpression: e {: RESULT = new Atributos(e.Type,e.Valu
 				| PrimaryExpression:e1 UnaryOperator:o UnaryExpression:e2 {: 
 						if(o.Code.equals("seta")) {
 							switch (e2.ColKind){
-								case EXCLUDING : break;
-								case INCLUDING : break;
-								case SIZE : break;
-								case FORALL : break;
-								case SELECT : break;
-								case EXISTS : break;
+								case INCLUDING : RESULT = new Atributos(null,null,e1.Code + "." + e2.Code); break;
+								case EXCLUDING : RESULT = new Atributos(null,null,"!(" + e1.Code + "." + e2.Code + ")"); break;
+								case SIZE : RESULT = new Atributos(null,null,e1.Code + e2.Code); break;
+								case FORALL : RESULT = new Atributos(null,null,e2.Code + "(" + e1.Code + ")"); break;
+								case SELECT : RESULT = new Atributos(null,null,e2.Code + "(" + e1.Code + ")"); break;
+								case EXISTS : RESULT = new Atributos(null,null,e2.Code + "(" + e1.Code + ")"); break;
+								default : RESULT = new Atributos(null,null,e1.Code + e2.Code);
 								}
-							RESULT = new Atributos(null,null,e1.Code + e2.Code);
+							
 							};
 							 
 						:};
@@ -214,27 +235,264 @@ CollectionOperations ::= SelectOperation:o {: RESULT = new Atributos(null,null,o
 				|ForAllOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:}
 				|SizeOperation:o {: RESULT = new Atributos(null,null,o.Code, o.ColKind);:};
 				
-SelectOperation ::= SELECT LPAREN OCLExpression RPAREN
-				| SELECT LPAREN CollectionParameters DOISPONTOS TypeSpecifier  BARRA OCLExpression RPAREN
-				| SELECT LPAREN CollectionParameters BARRA OCLExpression RPAREN;
+SelectOperation ::= SELECT LPAREN CollectionParameters:cp DOISPONTOS TypeSpecifier:ts  BARRA OCLExpression:e RPAREN
+					{:
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String selectName = getSelectName();
+					code.append("private IEnumerable " + selectName + "( ICollection collection ){" + newLine);
+					code.append( "bool result = true; " + newLine);
+					code.append( ts.Code + " " + cp.Code +";"+ newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "if(" + e.Code + ")" + newLine +    "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   "yield return " + vars[i] + ";" + newLine);
+					code.append(   "}");
+					code.append(  "}" + newLine);
+					code.append( "}" + newLine);
+									
+					GenAuxMethod(code.toString());
+					RESULT = new Atributos(null,null,selectName, SELECT);
+				:}
+				| SELECT LPAREN CollectionParameters:cp BARRA OCLExpression:e RPAREN
+				{:
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String selectName = getSelectName();
+					code.append("private IEnumerable " + selectName + "( ICollection collection ){" + newLine);
+					code.append( "var " + cp.Code + ";"+newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "if(" + e.Code + ")" + newLine +    "{" + newLine);
+					
+					for(int i = 0; i < vars.length; i++)
+						code.append(   "yield return " + vars[i] + ";" + newLine);
+					code.append(  "}" + newLine);	
+					code.append( "}" + newLine);
+					code.append( "}" + newLine);
+					GenAuxMethod(code.toString());
+					RESULT = new Atributos(null,null,selectName, EXISTS);
+				:}
+				
+				| SELECT LPAREN OCLExpression:e RPAREN
+				{:
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String selectName = getSelectName();
+					code.append("private IEnumerable " + selectName + "( ICollection collection ){" + newLine);
+					
+					
+					code.append( "foreach(var v in collection) {" + newLine);					
+					code.append(  "if (" + e.Code + ") yield return v;" + newLine );
+					code.append( "}" + newLine);
+					code.append( "}" + newLine);	
+					GenAuxMethod(code.toString());
+					RESULT = new Atributos(null,null,selectName, SELECT);
+					
+				:}
+				;
 
-ExistsOperation ::= EXISTS LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
-				| EXISTS LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				| EXISTS LPAREN OCLExpression RPAREN;
+ExistsOperation ::= EXISTS LPAREN CollectionParameters:cp DOISPONTOS TypeSpecifier:ts BARRA OCLExpression:e RPAREN
+					{:
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String existsName = getExistsName();
+					code.append("private bool " + existsName + "( ICollection collection ){" + newLine);
+					code.append( ts.Code + " " + cp.Code +";"+ newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "if(" + e.Code + ") return true;" + newLine );
+					code.append( "}" + newLine);
+					code.append("return false;" + newLine + "}");
+					
+					GenAuxMethod(code.toString());
+					RESULT = new Atributos(null,null,existsName, EXISTS);
+					
+				:}
+				| EXISTS LPAREN CollectionParameters:cp BARRA OCLExpression:e RPAREN
+				{:
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String existsName = getExistsName();
+					code.append("private bool " + existsName + "( ICollection collection ){" + newLine);
+					code.append( "var " + cp.Code + ";"+newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "if(" + e.Code + ") return true;" + newLine );
+					code.append( "}" + newLine);
+					code.append("return false;" + newLine + "}");
+					
+					GenAuxMethod(code.toString());
+					RESULT = new Atributos(null,null,existsName, EXISTS);
+					
+				:}
+				| EXISTS LPAREN OCLExpression:e RPAREN
+				{:
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String existsName = getExistsName();
+					code.append("private bool " + existsName + "( ICollection collection ){" + newLine);
+								
+					
+					code.append( "foreach(var v in collection) {" + newLine);					
+					code.append(  "if(" + e.Code + ") return true;" + newLine );
+					
+					code.append("return false;" + newLine + "}");
+					
+					GenAuxMethod(code.toString());
+					RESULT = new Atributos(null,null,existsName, EXISTS);
+					
+				:};
 
 IncludingOperation ::= INCLUDING LPAREN ID:i RPAREN {: 
-			RESULT = new Atributos(null,null,".Contains(" + i.Code + ")", INCLUDING);:};
+				RESULT = new Atributos(null,null,"Contains(" + i.Value + ")", INCLUDING);
+			:};
 
-ExcludingOperation ::= EXCLUDING LPAREN ID RPAREN ;
+ExcludingOperation ::= EXCLUDING LPAREN ID:i RPAREN {: 
+				RESULT = new Atributos(null,null,"Contains(" + i.Value + ")", EXCLUDING);
+			:};
 
-ForAllOperation ::= FORALL LPAREN CollectionParameters DOISPONTOS TypeSpecifier BARRA OCLExpression RPAREN
-				| FORALL LPAREN CollectionParameters BARRA OCLExpression RPAREN
-				| FORALL LPAREN OCLExpression RPAREN;
+ForAllOperation ::= FORALL LPAREN CollectionParameters:cp DOISPONTOS TypeSpecifier:ts BARRA OCLExpression:e RPAREN
+				{:
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String forAllName = getForAllName();
+					code.append("private bool " + forAllName + "( ICollection collection ){" + newLine);
+					code.append( "bool result = true; " + newLine);
+					code.append( ts.Code + " " + cp.Code +";"+ newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "result = result and " + e.Code + ";" + newLine );
+					code.append( "}" + newLine);
+					code.append("return result;" + newLine + "}");
+					
+					GenAuxMethod(code.toString());
+					RESULT = new Atributos(null,null,forAllName, FORALL);
+					
+				:}
+				| FORALL LPAREN CollectionParameters:cp BARRA OCLExpression:e RPAREN
+				{:
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String[] vars = cp.Code.split(",");
+					String[] indexes = new String[vars.length];
+					String forAllName = getForAllName();
+					code.append("private bool " + forAllName + "( ICollection collection ){" + newLine);
+					code.append( "bool result = true; " + newLine);
+					code.append( "var " + cp.Code + ";"+newLine);
+					for(int i = 0; i < vars.length; i++){
+					  String forIndex = "index"+i;
+					  indexes[i] = forIndex;
+					  if (i == 0)
+					  	code.append( "for(int " + indexes[i] + " = 0; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					  else
+					    code.append( "for(int " + indexes[i] + " = " + indexes[i-1] + "; " + indexes[i] + "< collection.Count(); " + indexes[i] + "++) " + newLine);
+					}
+					code.append(  "{" + newLine);
+					for(int i = 0; i < vars.length; i++)
+						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
+					
+					code.append(  "result = result && (" + e.Code + ");" + newLine );
+					code.append( "}" + newLine);
+					code.append("return result;" + newLine + "}");
+					
+					GenAuxMethod(code.toString());
+					RESULT = new Atributos(null,null,forAllName, FORALL);
+					
+				:}
+				| FORALL LPAREN OCLExpression:e RPAREN
+					{:
+					String tab = "\t";
+					String newLine = System.getProperty("line.separator");
+					StringBuilder code = new StringBuilder();
+					String forAllName = getForAllName();
+					code.append("private bool " + forAllName + "( ICollection collection ){" + newLine);
+					code.append( "bool result = true; " + newLine);
+						
+					
+					code.append( "foreach(var v in collection) {" + newLine);					
+					code.append(  "result = result && ( v." + e.Code + ");" + newLine );
+					
+					code.append("return result;" + newLine + "}");
+					
+					GenAuxMethod(code.toString());
+					RESULT = new Atributos(null,null,forAllName, FORALL);
+					
+				:};
 
 SizeOperation ::= SIZE LPAREN RPAREN {: RESULT = new Atributos(null,null,".Count()");:} ;
 
-CollectionParameters ::= PropertyCall
-				| PropertyCall VIRGULA CollectionParameters;
+CollectionParameters ::= PropertyCall:p {: RESULT = p; :}
+				| PropertyCall:p VIRGULA CollectionParameters:cp {: RESULT = new Atributos(null,null,p.Code + "," + cp.Code); :};
 
 
 //Tipos
@@ -282,10 +540,10 @@ RelationalOperator ::= MAIORQ{: RESULT = new Atributos(String.class,">",">");:}
 					 | MENORIGUAL{: RESULT = new Atributos(String.class,"<=","<=");:} 
 					 | IGUAL{: RESULT = new Atributos(String.class,"==","==");:} 
 					 | DIFF{: RESULT = new Atributos(String.class,"!=","!=");:};
+
 		
 AddOperator ::= MAIS {: RESULT = new Atributos(String.class,"+","+");:} | MENOS {: RESULT = new Atributos(String.class,"-","-");:};
 
 MultiplyOperator ::= VEZES {: RESULT = new Atributos(String.class,"*","*"); :} | DIVIDIR {: RESULT = new Atributos(String.class,"/","/"); :};
-
 UnaryOperator ::= NOT {: RESULT = new Atributos(String.class,"!","!");:}
 				| SETA {: RESULT = new Atributos(String.class,"!","seta");:};
