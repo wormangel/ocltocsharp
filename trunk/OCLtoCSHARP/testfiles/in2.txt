@@ -1,4 +1,4 @@
-context Cliente inv: true xor 2
+context Cliente inv: true xor false
 
 context Membership
 inv: program.serviceLevel->includes( actualLevel 
