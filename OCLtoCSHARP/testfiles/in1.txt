@@ -1,3 +1,44 @@
-context ProgramaFidelidade::cadastrar(c : Cliente) : void 
-pre parametroOk: not cliente->includes(c) 
-post resultadoOk: cliente = cliente@pre->includes(c)
+context Cliente
+inv: 	self.customer->select( name = 'David')->size() > 0
+
+context Cliente
+inv: 	self.customer->select( c | c.name = 'David')
+
+context Cliente
+inv: 	self.customer->select( c : Customer | c.name = 'David')
+
+context Cliente
+inv: 	self.customer->exists( name = 'David')
+
+context Cliente
+pre: 	self.customer->exists( c | c.name = 'David')
+
+context Cliente
+pre: 	self.customer->exists( c : Customer | c.name = 'David')
+
+
+
+context Cliente
+inv: 	self.customer->including(cas)
+
+context Cliente
+inv: 	self.customer->excluding(caa)
+
+context Cliente
+inv: 	self.customer->size() > 1
+
+context Cliente
+inv: 	self.customer->forAll( c : Customer | c.age() <= 70 )
+
+context Cliente
+inv: 	self.customer->forAll( c1,c2 : Customer | c1.age() <= c2.age() )
+
+context Cliente
+inv: 	self.customer->forAll( c1,c2 | c1.age() <= c2.age() )
+
+context Cliente
+inv: 	self.customer->forAll( age() > 18 )
+
+
+
+

@@ -70,7 +70,7 @@ www.lsd.ufcg.edu.br/~renato
 	<target name="generate_parser" description="Generates the CUP Parser">
 		<cup srcfile="${resources.dir}/ocl.cup" 
 			destdir="${src.dir}/"
-			interface="true" nowarn="true" />
+			interface="true" nowarn="true" force = "true"/>
 	</target>
 
 	<!-- Generates both the scanner and the parser -->
