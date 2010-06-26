@@ -41,7 +41,7 @@ non terminal	Atributos		BoolValue, Number;
 //Expressions
 non terminal	Atributos		PostFixExpression, LogicalExpression, NumberExpression, RelationalExpression, PropertyCall, PropertyCallExpression, AdditiveExpression, MultiplicativeExpression, UnaryExpression, PrimaryExpression, InvExpression, PreExpression, EqualityExpression;
 //Operators
-non terminal	Atributos 		MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, MultOperator, AddOperator, LogicalOperator;
+non terminal	Atributos 		MultiplyOperator, PostfixOperator, RelationalOperator, UnaryOperator, AddOperator, LogicalOperator;
 //Conditional Expressions
 non terminal	Atributos			ConditionalExpression, IfExpression, ImpliesExpression;
 //Collections
@@ -166,7 +166,7 @@ AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 				:};
 				
 MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
-				| UnaryExpression:e1 MultOperator:o MultiplicativeExpression:e2
+				| UnaryExpression:e1 MultiplyOperator:o MultiplicativeExpression:e2
 				{:
 				if(e1.Type == Integer.class && e2.Type == Integer.class){
 						if(o.Value.equals("*")){
@@ -197,13 +197,13 @@ UnaryExpression ::= PrimaryExpression: e {: RESULT = new Atributos(e.Type,e.Valu
 				| PrimaryExpression:e1 UnaryOperator:o UnaryExpression:e2 {: 
 						if(o.Code.equals("seta")) {
 							switch (e2.ColKind){
-								case INCLUDING : RESULT = new Atributos(null,null,e1.Code + "." + e2.Code); break;
-								case EXCLUDING : RESULT = new Atributos(null,null,"!(" + e1.Code + "." + e2.Code + ")"); break;
-								case SIZE : RESULT = new Atributos(null,null,e1.Code + e2.Code); break;
-								case FORALL : RESULT = new Atributos(null,null,e2.Code + "(" + e1.Code + ")"); break;
+								case INCLUDING : RESULT = new Atributos(Boolean.class,null,e1.Code + "." + e2.Code); break;
+								case EXCLUDING : RESULT = new Atributos(Boolean.class,null,"!(" + e1.Code + "." + e2.Code + ")"); break;
+								case SIZE : RESULT = new Atributos(Integer.class,null,e1.Code + e2.Code); break;
+								case FORALL : RESULT = new Atributos(Boolean.class,null,e2.Code + "(" + e1.Code + ")"); break;
 								case SELECT : RESULT = new Atributos(null,null,e2.Code + "(" + e1.Code + ")"); break;
 								case EXISTS : RESULT = new Atributos(null,null,e2.Code + "(" + e1.Code + ")"); break;
-								
+								default : RESULT = new Atributos(e2.Type,null,e1.Code + e2.Code);
 								}
 							
 							};
@@ -483,7 +483,7 @@ ForAllOperation ::= FORALL LPAREN CollectionParameters:cp DOISPONTOS TypeSpecifi
 					code.append(  "result = result && ( v." + e.Code + ");" + newLine );
 					code.append("}" + newLine);
 					code.append("return result;" + newLine + "}");
-					
+					code.append("}" + newLine);
 					GenAuxMethod(code.toString());
 					RESULT = new Atributos(null,null,forAllName, FORALL);
 					

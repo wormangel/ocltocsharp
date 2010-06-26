@@ -1,3 +1,8 @@
+context Cliente inv: self.customer->size() * 2 <= 18
+context Cliente inv: self.customer->size() + 2 <= 18
+context Cliente inv: self.customer->size() - 2 <= 18
+context Cliente inv: self.customer->size() / 2 <= 18
+
 context Cliente
 inv: 	self.customer->select( name = 'David')->forAll(c | c.name = 'David')
 
