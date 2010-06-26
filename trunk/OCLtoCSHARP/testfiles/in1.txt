@@ -1,5 +1,5 @@
 context Cliente
-inv: 	self.customer->select( name = 'David')->size() > 0
+inv: 	self.customer->select( name = 'David')->forAll(c | c.name = 'David')
 
 context Cliente
 inv: 	self.customer->select( c | c.name = 'David')
