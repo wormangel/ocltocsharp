@@ -131,7 +131,7 @@ LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 					} else if (o.Value.equals("^")){
 						RESULT = new Atributos(Boolean.class, new Boolean( (boolean) ( ((Boolean)e1.Value).booleanValue() ^ ((Boolean)e2.Value).booleanValue() )), e1.Code + " " + o.Code + " " + e2.Code);
 					} else if (o.Value.equals("implies")){
-						RESULT = new Atributos(null,null, "!(" + e1.Code + " || " + e2.Code + ")" );
+						RESULT = new Atributos(null,null, "!(" + e1.Code + " && !(" + e2.Code + "))" );
 					}
 				:};
 				
@@ -207,8 +207,7 @@ UnaryExpression ::= PrimaryExpression: e {: RESULT = new Atributos(e.Type,e.Valu
 								}
 							
 							};
-							 
-						:};
+				:};
 PrimaryExpression ::= LiteralCollection:l {: RESULT = l; :}
 				| IfExpression:e  {: RESULT = new Atributos(null,null,e.Code); :}
 				| LPAREN OCLExpression:e RPAREN  {: RESULT = new Atributos(null,null,"("+e.Code+")"); :}
@@ -431,7 +430,7 @@ ForAllOperation ::= FORALL LPAREN CollectionParameters:cp DOISPONTOS TypeSpecifi
 						code.append(   vars[i] + " = collection[" + indexes[i] + "];" + newLine);
 					
 					code.append(  "result = result and " + e.Code + ";" + newLine );
-					code.append( "}" + newLine);
+					//code.append( "}" + newLine);
 					code.append("return result;" + newLine + "}");
 					
 					GenAuxMethod(code.toString());
@@ -483,7 +482,7 @@ ForAllOperation ::= FORALL LPAREN CollectionParameters:cp DOISPONTOS TypeSpecifi
 					code.append(  "result = result && ( v." + e.Code + ");" + newLine );
 					code.append("}" + newLine);
 					code.append("return result;" + newLine + "}");
-					code.append("}" + newLine);
+					//code.append("}" + newLine);
 					GenAuxMethod(code.toString());
 					RESULT = new Atributos(null,null,forAllName, FORALL);
 					

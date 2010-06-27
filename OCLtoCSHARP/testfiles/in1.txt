@@ -1,11 +1,8 @@
 context Cliente
-inv: deMaior = true implies self.age() > 0
-
-context Cliente
 inv: 	self.customer::pack->select( name = 'David')->forAll(c | c.name = 'David')
 
 context Cliente
-inv: 	self.customer->select( c | c.name = 'David')
+inv teste: 	self.customer->select( c | c.name = 'David')
 
 context Cliente
 inv: 	self.customer->select( c : Customer | c.name = 'David')
