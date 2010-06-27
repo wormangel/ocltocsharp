@@ -131,7 +131,7 @@ LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 					} else if (o.Value.equals("^")){
 						RESULT = new Atributos(Boolean.class, new Boolean( (boolean) ( ((Boolean)e1.Value).booleanValue() ^ ((Boolean)e2.Value).booleanValue() )), e1.Code + " " + o.Code + " " + e2.Code);
 					} else if (o.Value.equals("implies")){
-						RESULT = new Atributos(null,null, "!(" + e1.Code + " or " + e2.Code );
+						RESULT = new Atributos(null,null, "!(" + e1.Code + " || " + e2.Code + ")" );
 					}
 				:};
 				
@@ -512,6 +512,7 @@ PropertyCall ::= RESULT {: RESULT = new Atributos(null,null,"result");:}
 				| PathName:p LPAREN FormalParameters:fp RPAREN {: RESULT = new Atributos(null,null,p.Code + " (" + fp.Code + ")");:}
 				| PathName:p PONTO PropertyCall:p2 {: RESULT = new Atributos(null,null,p.Code + "." + p2.Code);:};
 				
+				
 FormalParameters ::= FormalParameters:f VIRGULA FormalParameter:f2 {: RESULT = new Atributos(null,null, f.Code + "," + f2.Code);:}
 				|FormalParameter:f {: RESULT = new Atributos(null,null,f.Code);:};	
 							
@@ -519,8 +520,8 @@ FormalParameter ::= ID:i DOISPONTOS TypeSpecifier:t {: RESULT = new Atributos(nu
 				|PropertyCall:p {: RESULT = new Atributos(null,null,p.Code);:};
 				
 PathName ::= ID:i {: if (i.Value.equals("self")) RESULT = new Atributos(null,null,"this"); else RESULT = new Atributos(null,null,i.Value.toString());:} 
-		| ID:i PONTO PathName:p {: if (i.Value.equals("self")) RESULT = new Atributos(null,null,"this." + p.Code); else RESULT = new Atributos(null,null,i.Value.toString() + "." + p.Code);:};
-		
+		| ID:i PONTO PathName:p {: if (i.Value.equals("self")) RESULT = new Atributos(null,null,"this." + p.Code); else RESULT = new Atributos(null,null,i.Value.toString() + "." + p.Code);:}
+		| ID:i QUATROPONTOS PathName:p {: RESULT = new Atributos(null,null,p.Code + "." + i.Value.toString());:};
 Number ::= INTEGER:i {:RESULT = new Atributos(i.Type,Integer.parseInt(i.Value.toString()),i.Value.toString());:}
 			| REAL:r {: RESULT = new Atributos(r.Type,Double.parseDouble(r.Value.toString()),r.Value.toString());:};
 

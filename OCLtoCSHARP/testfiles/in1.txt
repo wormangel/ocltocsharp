@@ -1,10 +1,8 @@
-context Cliente inv: self.customer->size() * 2 <= 18
-context Cliente inv: self.customer->size() + 2 <= 18
-context Cliente inv: self.customer->size() - 2 <= 18
-context Cliente inv: self.customer->size() / 2 <= 18
+context Cliente
+inv: deMaior = true implies self.age() > 0
 
 context Cliente
-inv: 	self.customer->select( name = 'David')->forAll(c | c.name = 'David')
+inv: 	self.customer::pack->select( name = 'David')->forAll(c | c.name = 'David')
 
 context Cliente
 inv: 	self.customer->select( c | c.name = 'David')
@@ -44,6 +42,10 @@ inv: 	self.customer->forAll( c1,c2 | c1.age() <= c2.age() )
 context Cliente
 inv: 	self.customer->forAll( age() > 18 )
 
+context Cliente inv: self.customer->size() * 2 <= 18
+context Cliente inv: self.customer->size() + 2 <= 18
+context Cliente inv: self.customer->size() - 2 <= 18
+context Cliente inv: self.customer->size() / 2 <= 18
 
 
 
