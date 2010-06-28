@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -11,7 +12,6 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -24,11 +24,39 @@ public class XmiParser {
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
 		
 		// Testes
-		boolean teste = isValidPath("Cartao", "proprietario.nome");
-		System.out.println(teste);
+//		boolean teste = isValidPath("Cartao", "proprietario.nome");
+//		System.out.println(teste);
+		for (String string : listClasses()) {
+			System.out.println(string);
+		}
 		return;
 		//boolean testey = isValidPath("Cliente", "nomse");
 		//System.out.println(teste);
+	}
+	
+	public static ArrayList<String> listClasses() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setNamespaceAware(true);
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.parse(XMI_PATH);		
+		
+		XPathFactory xPathFactory = XPathFactory.newInstance();
+		XPath xpath = xPathFactory.newXPath();
+		xpath.setNamespaceContext(new PersonalNamespaceContext());
+		XPathExpression expr = xpath.compile(String.format("//ownedMember[@xmi:type='uml:Class']"));
+		Object result = expr.evaluate(doc, XPathConstants.NODESET);
+		if (result != null){
+			ArrayList<String> resultado = new ArrayList<String>();
+			NodeList nodes = (NodeList) result;
+			if (nodes.getLength() > 0)
+				for(int i = 0; i < nodes.getLength(); i++){
+					if(nodes.item(i).getAttributes().getNamedItem("name") != null) {
+						resultado.add(nodes.item(i).getAttributes().getNamedItem("name").getNodeValue());	
+					}					
+				}
+			return resultado;
+		}
+		return null;
 	}
 	
 	public static boolean isValidClass(String className) throws XPathExpressionException, ParserConfigurationException, SAXException, IOException{

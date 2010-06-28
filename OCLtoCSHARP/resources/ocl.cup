@@ -20,6 +20,7 @@ action code {:
 			private String getSelectName() { selectCount++; return "Select"+selectCount; } 
 			private String caller;
 			private void GenAuxMethod(String code) { System.out.println(code);}
+			
 			:};
 
 /* Terminais (tokens vindos do lexer) */
