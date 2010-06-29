@@ -1,4 +1,6 @@
 import java_cup.runtime.*;
+import xmiParser.*;
+
 action code {: 
 			private final int INCLUDING = 1;
 			private final int EXCLUDING = 2;

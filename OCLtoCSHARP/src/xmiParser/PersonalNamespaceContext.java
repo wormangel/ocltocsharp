@@ -1,3 +1,4 @@
+package xmiParser;
 import java.util.Iterator;
 
 import javax.xml.XMLConstants;
