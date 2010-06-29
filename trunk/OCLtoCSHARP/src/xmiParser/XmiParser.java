@@ -40,15 +40,21 @@ public class XmiParser {
 //		boolean teste = isValidPath("Cartao", "proprietario.nome");
 //		System.out.println(teste);
 		
-//		for (String string : listClasses()) {
-//			System.out.println(String.format("\n- Atributos de %s\n", string));
-//			for (Attribute op : parseClassAttributes(string)) {
-//				System.out.println(op);
-//			}
-//		}
+		for (String string : listClasses()) {
+			System.out.println("\n\n##### Classe: " + string);
+			System.out.println(String.format("\n- Atributos de %s\n", string));
+			for (Attribute op : parseClassAttributes(string)) {
+				System.out.println(op);
+			}
+			System.out.println(String.format("\n- Operacoes de %s\n", string));
+			for (Operation op : parseClassOperations(string)) {
+				System.out.println(op);
+			}
+		}
 
+		System.out.println("\n\n--- ENUMERATORS\n\n");
 		for (Enumerator e : parseEnums()) {
-			System.out.println(e.getName());
+			System.out.println("-" + e.getName());
 			for (String string : e.getItens()) {
 				System.out.println(string);
 			}
