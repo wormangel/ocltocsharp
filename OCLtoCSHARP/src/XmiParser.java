@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -26,15 +27,21 @@ public class XmiParser {
 		// Testes
 //		boolean teste = isValidPath("Cartao", "proprietario.nome");
 //		System.out.println(teste);
-		for (String string : listClasses()) {
+		System.out.println("\nOPERACOES\n");
+		for (String string : getOperationsNames("Cliente")) {
 			System.out.println(string);
 		}
-		return;
+		System.out.println("\nATRIBUTOS\n");
+		for (String string : getAttributesNames("Cliente")) {
+			System.out.println(string);
+		}
+//		System.out.println(getClassName("_fx7WO2PXEd-bkL5iYhiD_Q"));
+//		return;
 		//boolean testey = isValidPath("Cliente", "nomse");
 		//System.out.println(teste);
 	}
 	
-	public static ArrayList<String> listClasses() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
+	public static List<String> listClasses() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		factory.setNamespaceAware(true);
 		DocumentBuilder builder = factory.newDocumentBuilder();
@@ -57,6 +64,86 @@ public class XmiParser {
 			return resultado;
 		}
 		return null;
+	}
+	
+	public static String getClassName(String id) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setNamespaceAware(true);
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.parse(XMI_PATH);		
+		
+		XPathFactory xPathFactory = XPathFactory.newInstance();
+		XPath xpath = xPathFactory.newXPath();
+		xpath.setNamespaceContext(new PersonalNamespaceContext());
+		XPathExpression expr = xpath.compile(String.format("//ownedMember[@xmi:type='uml:Class'][@xmi:id='%s']", id));
+		Object result = expr.evaluate(doc, XPathConstants.NODESET);
+		if (result != null){
+			NodeList nodes = (NodeList) result;
+			if (nodes.getLength() > 0) {
+				return nodes.item(0).getAttributes().getNamedItem("name").getNodeValue();
+			} 
+		}		
+		return null;
+	}
+	
+	public static List<String> getAttributesNames(String classe) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setNamespaceAware(true);
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.parse(XMI_PATH);		
+		
+		XPathFactory xPathFactory = XPathFactory.newInstance();
+		XPath xpath = xPathFactory.newXPath();
+		xpath.setNamespaceContext(new PersonalNamespaceContext());
+		XPathExpression expr = xpath.compile(String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']/ownedAttribute", classe));
+		Object result = expr.evaluate(doc, XPathConstants.NODESET);
+		if (result != null){
+			ArrayList<String> resultado = new ArrayList<String>();
+			NodeList nodes = (NodeList) result;
+			if (nodes.getLength() > 0)
+				for(int i = 0; i < nodes.getLength(); i++){
+					if(nodes.item(i).getAttributes().getNamedItem("name") != null) {
+						resultado.add(nodes.item(i).getAttributes().getNamedItem("name").getNodeValue());	
+					}					
+				}
+			return resultado;
+		}
+		return null;
+	}
+
+	public static List<String> getOperationsNames(String classe) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setNamespaceAware(true);
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.parse(XMI_PATH);		
+		
+		XPathFactory xPathFactory = XPathFactory.newInstance();
+		XPath xpath = xPathFactory.newXPath();
+		xpath.setNamespaceContext(new PersonalNamespaceContext());
+		XPathExpression expr = xpath.compile(String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']/ownedOperation", classe));
+		Object result = expr.evaluate(doc, XPathConstants.NODESET);
+		if (result != null){
+			ArrayList<String> resultado = new ArrayList<String>();
+			NodeList nodes = (NodeList) result;
+			if (nodes.getLength() > 0)
+				for(int i = 0; i < nodes.getLength(); i++){
+					if(nodes.item(i).getAttributes().getNamedItem("name") != null) {
+						resultado.add(nodes.item(i).getAttributes().getNamedItem("name").getNodeValue());	
+					}					
+				}
+			return resultado;
+		}
+		return null;
+	}
+	
+	public static String getPrimitiveTypeName(String id) throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
+		if (id.equals("pathmap://UML2_LIBRARIES/UML2PrimitiveTypes.library.uml2#_IXlH8a86EdieaYgxtVWN8Q")){
+			return "string";
+		} else if (id.equals("pathmap://UML2_LIBRARIES/UML2PrimitiveTypes.library.uml2#_IXfBUK86EdieaYgxtVWN8Q")){
+			return "boolean";
+		} else if (id.equals("pathmap://UML2_LIBRARIES/UML2PrimitiveTypes.library.uml2#_IXlH8K86EdieaYgxtVWN8Q")){
+			return "int";
+		} else return null;
 	}
 	
 	public static boolean isValidClass(String className) throws XPathExpressionException, ParserConfigurationException, SAXException, IOException{
