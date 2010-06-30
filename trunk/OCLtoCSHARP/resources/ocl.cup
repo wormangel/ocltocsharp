@@ -25,6 +25,9 @@ action code {:
 			
 			:};
 
+init with {: CodeWriter.start();
+			:}
+
 /* Terminais (tokens vindos do lexer) */
 terminal            PRE, POS, INV, SELECT, EXISTS, FORALL, IF, THEN, ELSE, IMPLIES, INCLUDING, EXCLUDING, OCLISNEW, ATPRE, RESULT, SIZE, CONTEXT, LPAREN, RPAREN;
 terminal			LCOLCH, RCOLCH, LCHAVE, RCHAVE, DOISPONTOS, QUATROPONTOS, VIRGULA, IGUAL, DIFF, MENORQ, MAIORQ, MENORIGUAL, MAIORIGUAL, SETA, PONTOPONTO;
