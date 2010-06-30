@@ -28,4 +28,16 @@ public class Enumerator {
 	public List<String> getItens() {
 		return itens;
 	}
+	
+	public String toString(){
+		String lineSep = System.getProperty("line.separator");
+		String result = "";
+		result += "enum " + this.name + "{" + lineSep;
+		for (String item : this.itens) {
+			result += item + "," + lineSep;
+		}
+		result = result.substring(0,result.length()-3);
+		result += lineSep + "}" + lineSep;
+		return result;
+	}
 }
