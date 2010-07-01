@@ -1,3 +1,5 @@
+
+
 context Cliente
 inv: 	self.customer::pack->select( name = 'David')->forAll(c | c.name = 'David')
 
