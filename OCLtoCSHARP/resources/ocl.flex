@@ -41,7 +41,7 @@ comment = [\-][\-]~[\r]
 %%
 
 "pre"		{if(debug) System.out.print("( PRE )"); return symbol(sym.PRE); }
-"post"		{if(debug) System.out.print("( POS )"); return symbol(sym.POS); }
+"pos"		{if(debug) System.out.print("( POS )"); return symbol(sym.POS); }
 "inv"		{if(debug) System.out.print("( INV )"); return symbol(sym.INV); }
 "select"	{if(debug) System.out.print("( SELECT )"); return symbol(sym.SELECT); }
 "exists"	{if(debug) System.out.print("( EXISTS )"); return symbol(sym.EXISTS); }
