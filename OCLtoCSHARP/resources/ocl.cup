@@ -21,11 +21,14 @@ action code {:
 			private int selectCount = 0;
 			private String getSelectName() { selectCount++; return "Select"+selectCount; } 
 			private String caller;
+			private boolean debugg = true;
 			private void GenAuxMethod(String code) { System.out.println(code);}
-			
+			private String currentContext;
 			:};
 
-init with {: CodeWriter.start();
+init with {: 
+			
+			CodeWriter.start();
 			:}
 
 /* Terminais (tokens vindos do lexer) */
@@ -77,13 +80,13 @@ OCLFile ::= PACKAGE ID OCLConstraints ENDPACKAGE
 				
 OCLConstraints ::= Constraint OCLConstraints | Constraint;
 
-Constraint ::= ContextDeclaration ContextBody;
+Constraint ::= ContextDeclaration ContextBody {: currentContext = null; :};
 
-ContextDeclaration ::= CONTEXT OperationContext 
-				| CONTEXT ClassifierContext;
+ContextDeclaration ::= CONTEXT OperationContext:c {: currentContext = (String)c.Value; :}
+				| CONTEXT ClassifierContext:c {: currentContext = (String)c.Value; :};
 				
-ContextBody ::= InvExpression: i {: System.out.println(i.Code); :}
-				| PreExpression: i {: System.out.println(i.Code); :};
+ContextBody ::= InvExpression: i {: if (debugg) { System.out.println(i.Code); } :}
+				| PreExpression: i {: if (debugg) { System.out.println(i.Code); } :};
 				
 InvExpression ::= INV DOISPONTOS OCLExpression:e 
 				{:	RESULT = new Atributos(null,null, "private void " + getInvName() + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Inv violada\");" + " }"); :}
@@ -104,24 +107,27 @@ PreExpression ::= PRE DOISPONTOS OCLExpression:e
 				  {: RESULT = new Atributos(null,null, "private void CheckPre" + i1.Code + "() { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
 						+"private void CheckPos" + i2.Code + "() { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" ); :};
 
-OperationContext ::= ID QUATROPONTOS PropertyCall  
-				| ID QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier ;
+OperationContext ::= ID:i QUATROPONTOS PropertyCall  {: RESULT = new Atributos(String.class, i.Value.toString(), null); :}
+				| ID:i QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier {: RESULT = new Atributos(String.class, i.Value.toString(), null); :};
 				
 ClassifierContext ::= ID:i DOISPONTOS ID {:
 					if (!XmiParser.isValidClass(i.Value.toString())){
 						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i.Value.toString() + " DEFINIDA NO XMI1");
 						System.exit(0);
 					}
+					RESULT = new Atributos(String.class, i.Value.toString(), null);
 				:} 
 				| ID:i {: 
 					if (!XmiParser.isValidClass(i.Value.toString())){
 						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i.Value.toString() + " DEFINIDA NO XMIz");
-						System.exit(0);}
+						System.exit(0);
+					}
+					RESULT = new Atributos(String.class, i.Value.toString(), null);
 					:};
 
 // Expressões 
 
-OCLExpression ::= LogicalExpression: e {: RESULT = new Atributos(null,null,e.Code);:};
+OCLExpression ::= LogicalExpression: e {: RESULT = e; :};
 
 LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 				| RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2 
@@ -131,11 +137,11 @@ LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 						System.exit(0);
 					}
 					if(o.Value.equals("&&")){
-						RESULT = new Atributos(Boolean.class, new Boolean( (boolean) ( ((Boolean)e1.Value).booleanValue() && ((Boolean)e2.Value).booleanValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+						RESULT = new Atributos(Boolean.class, new String(e1.Value + " && " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 					} else if (o.Value.equals("||")){
-						RESULT = new Atributos(Boolean.class, new Boolean( (boolean) ( ((Boolean)e1.Value).booleanValue() || ((Boolean)e2.Value).booleanValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+						RESULT = new Atributos(Boolean.class, new String(e1.Value + " || " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 					} else if (o.Value.equals("^")){
-						RESULT = new Atributos(Boolean.class, new Boolean( (boolean) ( ((Boolean)e1.Value).booleanValue() ^ ((Boolean)e2.Value).booleanValue() )), e1.Code + " " + o.Code + " " + e2.Code);
+						RESULT = new Atributos(Boolean.class, new String(e1.Value + " ^ " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 					} else if (o.Value.equals("implies")){
 						RESULT = new Atributos(null,null, "!(" + e1.Code + " && !(" + e2.Code + "))" );
 					}
@@ -149,21 +155,17 @@ AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 				{:
 				if(e1.Type == Integer.class && e2.Type == Integer.class){
 						if(o.Value.equals("+")){
-							RESULT = new Atributos(Integer.class, new Integer( (int) ( ((Integer)e1.Value).intValue() + ((Integer)e2.Value).intValue() )), e1.Code + " " + o.Code + " " + e2.Code);
-							System.out.println(RESULT.Value.toString());
+							RESULT = new Atributos(Integer.class, new String(e1.Value + " + " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 						} else if (o.Value.equals("-")){
-							RESULT = new Atributos(Integer.class, new Integer( (int) ( ((Integer)e1.Value).intValue() - ((Integer)e2.Value).intValue() )), e1.Code + " " + o.Code + " " + e2.Code);
-							System.out.println(RESULT.Value.toString());
+							RESULT = new Atributos(Integer.class, new String(e1.Value + " - " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 						}
 			   	} else if( (e1.Type == Double.class && e2.Type == Double.class) ||
 				          (e1.Type == Integer.class && e2.Type == Double.class) ||
 				          (e1.Type == Double.class && e2.Type == Integer.class) ) {
 			   			if(o.Value.equals("+")){
-							RESULT = new Atributos(Double.class, new Double( (double) ( ((Double)e1.Value).doubleValue() + ((Double)e2.Value).doubleValue() )), e1.Code + " " + o.Code + " " + e2.Code);
-							System.out.println(RESULT.Value.toString());
+							RESULT = new Atributos(Double.class, new String(e1.Value + " + " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 						} else if (o.Value.equals("-")){
-							RESULT = new Atributos(Double.class, new Double( (double) ( ((Double)e1.Value).doubleValue() - ((Double)e2.Value).doubleValue() )), e1.Code + " " + o.Code + " " + e2.Code);
-							System.out.println(RESULT.Value.toString());
+							RESULT = new Atributos(Double.class, new String(e1.Value + " - " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 						}
 			   	} else {
 			   			System.err.println("\n\nERRO DE COMPILACAO AdditiveExpression");
@@ -176,21 +178,17 @@ MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 				{:
 				if(e1.Type == Integer.class && e2.Type == Integer.class){
 						if(o.Value.equals("*")){
-							RESULT = new Atributos(Integer.class, new Integer( (int) ( ((Integer)e1.Value).intValue() * ((Integer)e2.Value).intValue() )), e1.Code + " " + o.Code + " " + e2.Code);
-							System.out.println("ALOK1");
+							RESULT = new Atributos(Integer.class, new String(e1.Value + " * " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 						} else if (o.Value.equals("/")){
-							RESULT = new Atributos(Integer.class, new Integer( (int) ( ((Integer)e1.Value).intValue() / ((Integer)e2.Value).intValue() )), e1.Code + " " + o.Code + " " + e2.Code);
-							System.out.println("ALOK2");
+							RESULT = new Atributos(Integer.class, new String(e1.Value + " / " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 						}
 			   	} else if( (e1.Type == Double.class && e2.Type == Double.class) ||
 				          (e1.Type == Integer.class && e2.Type == Double.class) ||
 				          (e1.Type == Double.class && e2.Type == Integer.class) ) {
 			   			if(o.Value.equals("*")){
-							RESULT = new Atributos(Double.class, new Double( (double) ( ((Double)e1.Value).doubleValue() * ((Double)e2.Value).doubleValue() )), e1.Code + " " + o.Code + " " + e2.Code);
-							System.out.println("ALOK1");
+							RESULT = new Atributos(Double.class, new String(e1.Value + " * " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 						} else if (o.Value.equals("/")){
-							RESULT = new Atributos(Double.class, new Double( (double) ( ((Double)e1.Value).doubleValue() / ((Double)e2.Value).doubleValue() )), e1.Code + " " + o.Code + " " + e2.Code);
-							System.out.println("ALOK2");
+							RESULT = new Atributos(Double.class, new String(e1.Value + " / " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 						}
 			   	} else {
 			   			System.err.println("\n\nERRO DE COMPILACAO MultiplicativeExpression");
@@ -222,8 +220,8 @@ PrimaryExpression ::= LiteralCollection:l {: RESULT = l; :}
 
 LiteralCollection ::= Number:n {: RESULT = n; :}
 				| BoolValue:b {: RESULT = b; :}
-				| STRING:s {: RESULT = new Atributos(null,null,s.Value.toString());:} 
-				| PropertyCall:p {: RESULT = new Atributos(null,null,p.Code);:}
+				| STRING:s {: RESULT = new Atributos(s.Type,s.Value,s.Value.toString());:} 
+				| PropertyCall:p {: RESULT = p;:}
 				| PropertyCall:p ATPRE;
 				
 IfExpression ::= IF LogicalExpression:e1 THEN  LogicalExpression:e2  ELSE  LogicalExpression:e3 ENDIF
@@ -512,7 +510,7 @@ TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,null,p.Code);:}
 //Literais
 
 PropertyCall ::= RESULT {: RESULT = new Atributos(null,null,"result");:}
-				| PathName:p {: RESULT = new Atributos(null,null,p.Code);:}
+				| PathName:p {: RESULT = p;:}
 				| PathName:p LPAREN RPAREN {: RESULT = new Atributos(null,null,p.Code + "()");:}
 				| PathName:p LPAREN FormalParameters:fp RPAREN {: RESULT = new Atributos(null,null,p.Code + " (" + fp.Code + ")");:}
 				| PathName:p PONTO PropertyCall:p2 {: RESULT = new Atributos(null,null,p.Code + "." + p2.Code);:};
@@ -524,9 +522,29 @@ FormalParameters ::= FormalParameters:f VIRGULA FormalParameter:f2 {: RESULT = n
 FormalParameter ::= ID:i DOISPONTOS TypeSpecifier:t {: RESULT = new Atributos(null,null,t.Code + " " + i.Code );:}
 				|PropertyCall:p {: RESULT = new Atributos(null,null,p.Code);:};
 				
-PathName ::= ID:i {: if (i.Value.equals("self")) RESULT = new Atributos(null,null,"this"); else RESULT = new Atributos(null,null,i.Value.toString());:} 
-		| ID:i PONTO PathName:p {: if (i.Value.equals("self")) RESULT = new Atributos(null,null,"this." + p.Code); else RESULT = new Atributos(null,null,i.Value.toString() + "." + p.Code);:}
+PathName ::= ID:i 
+			{: 
+				if (i.Value.equals("self")) {
+					RESULT = new Atributos(XmiParser.getType(currentContext, i.Value.toString()), i.Value,"this"); 
+				} else {
+					RESULT = new Atributos(XmiParser.getType(currentContext, i.Value.toString()),i.Value,i.Value.toString());
+				}
+			:} 
+			| ID:i PONTO PathName:p 
+			{: 
+				if (i.Value.equals("self")) {
+					if( XmiParser.isValidPath(currentContext, p.Value.toString()) ) {
+						RESULT = new Atributos(XmiParser.getType(currentContext, p.Value.toString()), p.Value, "this." + p.Code);
+					} else {
+						System.err.println("Erro de compilação: propriedade inexistente no contexto");
+						System.exit(0);
+					} 
+				} else { 
+					RESULT = new Atributos(null,null,i.Value.toString() + "." + p.Code);
+				}
+			:}
 		| ID:i QUATROPONTOS PathName:p {: RESULT = new Atributos(null,null,p.Code + "." + i.Value.toString());:};
+		
 Number ::= INTEGER:i {:RESULT = new Atributos(i.Type,Integer.parseInt(i.Value.toString()),i.Value.toString());:}
 			| REAL:r {: RESULT = new Atributos(r.Type,Double.parseDouble(r.Value.toString()),r.Value.toString());:};
 

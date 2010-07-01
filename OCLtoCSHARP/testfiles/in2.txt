@@ -1,7 +1,7 @@
+context Cliente inv: true xor false
+
 context Cliente
 inv: age >= 18 and name = 'David' -- Cliente deve se chamar David e ser maior de idade
-
-context Cliente inv: true xor false
 
 context Membership
 inv: program.serviceLevel->includes( actualLevel 
