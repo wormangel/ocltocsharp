@@ -150,6 +150,7 @@ public class XmiParser {
 		return null;
 	}
 	
+
 	
 	public static List<Enumerator> parseEnums() throws ParserConfigurationException, SAXException, IOException, XPathExpressionException{
 		ArrayList<Enumerator> resultado = new ArrayList<Enumerator>();
@@ -563,6 +564,7 @@ public class XmiParser {
 	// classe nao for associacao
 	// Nao deve ser invocado diretamente, apenas no local esperado (nao faz checagem de existencia de classe - propenso a erros)
 	private static String getAssociationName(String context, String attribute) throws XPathExpressionException, ParserConfigurationException, SAXException, IOException {
+
 		
 		if(!isValidAssociation(context, attribute))
 			return attribute;
@@ -604,6 +606,75 @@ public class XmiParser {
 		}
 		
 		return associationName;
+	}
+
+
+	
+	public static Class<?> getType(String currentContext, String property) throws XPathExpressionException, ParserConfigurationException, SAXException, IOException {
+		
+		if(!isValidPath(currentContext, property)){
+			return null;
+		}
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setNamespaceAware(true);
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.parse(XMI_PATH);		
+		
+		XPathFactory xPathFactory = XPathFactory.newInstance();
+		XPath xpath = xPathFactory.newXPath();
+		xpath.setNamespaceContext(new PersonalNamespaceContext());
+		
+		XPathExpression expr;
+		
+		if (isValidAttribute(currentContext, property)){
+			expr = xpath.compile(String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']/ownedAttribute[@name='%s']", currentContext, property));
+			Object result = expr.evaluate(doc, XPathConstants.NODE);
+			if (result != null){
+				Node node = (Node) result;
+				if (node != null){
+					String type;
+					if(node.getAttributes().getNamedItem("type") != null){
+						type = getClassName(node.getAttributes().getNamedItem("type").getNodeValue());
+					} else {
+						Node nodoTipo = (Node) node.getFirstChild().getNextSibling();
+						type = getPrimitiveTypeName(nodoTipo.getAttributes().getNamedItem("href").getNodeValue());
+					}
+					if (type.equals(TYPE_INT)){
+						return Integer.class;
+					} else if (type.equals(TYPE_BOOLEAN)){
+						return Boolean.class;
+					} else if (type.equals(TYPE_STRING)){
+						return String.class;
+					}
+				}
+			}
+		} else if (isValidOperation(currentContext, property)){
+			expr = xpath.compile(String.format("//ownedMember[@xmi:type='uml:Class'][@name='%s']/ownedOperation[@name='%s']/returnResult", currentContext, property));
+			Object result = expr.evaluate(doc, XPathConstants.NODE);
+			if (result != null){
+				Node node = (Node) result;
+				if (node != null){
+					String type;
+					if(node.getAttributes().getNamedItem("type") != null){
+						type = getClassName(node.getAttributes().getNamedItem("type").getNodeValue());
+					} else {
+						Node nodoTipo = (Node) node.getFirstChild().getNextSibling();
+						type = getPrimitiveTypeName(nodoTipo.getAttributes().getNamedItem("href").getNodeValue());
+					}
+					if (type.equals(TYPE_INT)){
+						return Integer.class;
+					} else if (type.equals(TYPE_BOOLEAN)){
+						return Boolean.class;
+					} else if (type.equals(TYPE_STRING)){
+						return String.class;
+					}
+				} else {
+					return null;
+				}
+			}
+		}
+		return null;
 	}
 	
 }

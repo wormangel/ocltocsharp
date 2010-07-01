@@ -17,7 +17,12 @@ public class Operation {
 	public Operation(String name, String returnType){
 		this.name = name;
 		this.returnType = returnType;
-		this.body = "";
+		if(!this.returnType.equals(XmiParser.TYPE_VOID)){
+			this.body = "return null;";
+		} else {
+			this.body = "";
+		}
+		
 		parameters = new ArrayList<OperationParameter>();
 	}
 	
