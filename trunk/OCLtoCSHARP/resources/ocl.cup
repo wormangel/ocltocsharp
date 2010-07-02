@@ -12,8 +12,10 @@ action code {:
 			private String getInvName() { invCount++; return "CheckInv" + invCount;}
 			private int preCount = 0;
 			private String getPreName() { preCount++; return "CheckPre" + preCount;}
+			private String lastPreName() { return "CheckPre" + preCount;}
 			private int posCount = 0;
-			private String getPosName() { posCount++; return "CheckPos" + posCount;} 
+			private String getPosName() { posCount++; return "CheckPos" + posCount;}
+			private String lastPosName() { return "CheckPos" + posCount;} 
 			private int forAllCount = 0;
 			private String getForAllName() { forAllCount++; return "ForAll"+forAllCount; }
 			private int existsCount = 0;
@@ -24,6 +26,32 @@ action code {:
 			private boolean debugg = true;
 			private void GenAuxMethod(String code) { System.out.println(code);}
 			private String currentContext;
+			private String fullContext;
+			private String formalParameters;
+			
+			private String getClassContext(String fullContext) {
+				int index = fullContext.indexOf("::");
+				return fullContext.substring(0,index);				
+			}
+			
+			private String getOperationName(String fullContext) {
+				int index1 = fullContext.indexOf("::");
+				int index2 = fullContext.indexOf("(");
+				return fullContext.substring(index1+2,index2);
+			}
+			
+			private String getParamNames(){
+				String names = "";
+				String[] semVirgulas = fullContext.split(",");
+				for(String s : semVirgulas){
+					String[] semEspacos = s.split(" ");
+					names += semEspacos[1] + ",";
+				}
+				if (names.endsWith(","))
+					names = names.substring(0,names.length()-1);
+				return names;
+			}
+
 			:};
 
 init with {: 
@@ -80,9 +108,9 @@ OCLFile ::= PACKAGE ID OCLConstraints ENDPACKAGE
 				
 OCLConstraints ::= Constraint OCLConstraints | Constraint;
 
-Constraint ::= ContextDeclaration ContextBody {: currentContext = null; :};
+Constraint ::= ContextDeclaration ContextBody {: currentContext = null; fullContext = null; formalParameters = null; :};
 
-ContextDeclaration ::= CONTEXT OperationContext:c {: currentContext = (String)c.Value; :}
+ContextDeclaration ::= CONTEXT OperationContext:c {: currentContext = getClassContext((String)c.Value); fullContext = (String)c.Value; :}
 				| CONTEXT ClassifierContext:c {: currentContext = (String)c.Value; :};
 				
 ContextBody ::= InvExpression: i {: if (debugg) { System.out.println(i.Code); } :}
@@ -93,7 +121,7 @@ InvExpression ::= INV DOISPONTOS OCLExpression:e
 				| INV ID:i DOISPONTOS OCLExpression:e {: RESULT = new Atributos(null,null, "private void checkInv" + i.Value.toString()+ "() { " + "if (!(" + e.Code +"))  throw new Exception(\"Inv violada\");" + " }"); :};
 
 PreExpression ::= PRE DOISPONTOS OCLExpression:e 
-				  {:RESULT = new Atributos(null,null, "private void " +getPreName() + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }"); :}
+				  {:RESULT =  new Atributos(null,null, "private void " +getPreName() + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }"); :}
 				| PRE ID:i DOISPONTOS OCLExpression:e 
 				  {:RESULT = new Atributos(null,null, "private void CheckPre" +i.Code + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }"); :}
 				| POS DOISPONTOS OCLExpression:e 
@@ -101,14 +129,28 @@ PreExpression ::= PRE DOISPONTOS OCLExpression:e
 				| POS ID:i DOISPONTOS OCLExpression:e 
 				  {:RESULT = new Atributos(null,null, "private void CheckPos" + i.Code + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"); :}
 				| PRE DOISPONTOS OCLExpression:e1 POS DOISPONTOS OCLExpression:e2 
-				  {:RESULT = new Atributos(null,null, "private void " +getPreName() + "() { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
-						+"private void " + getPosName() + "() { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" ); :}
+				  {:
+				  	RESULT = new Atributos(null,null, "private void " +getPreName() + "(" +  formalParameters + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
+						+"private void " + getPosName() + "(" + formalParameters + ") { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }"
+						+"private void " + getOperationName(fullContext) + "Checked" + "(" + formalParameters + ") { " + lastPreName() + 
+						"(" + getParamNames() +  ");" + getOperationName(fullContext) + "(" + getParamNames() + ");" + lastPosName() + "(" + getParamNames() + ");" + " }"  );
+					 
+				  :}
 				| PRE ID:i1 DOISPONTOS OCLExpression:e1 POS ID:i2 DOISPONTOS OCLExpression:e2
-				  {: RESULT = new Atributos(null,null, "private void CheckPre" + i1.Code + "() { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
-						+"private void CheckPos" + i2.Code + "() { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" ); :};
+				  {: 
+				  	RESULT = new Atributos(null,null, "private void CheckPre" + i1.Code + "() { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
+						+"private void CheckPos" + i2.Code + "() { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" ); 
+					
+				  :};
 
-OperationContext ::= ID:i QUATROPONTOS PropertyCall  {: RESULT = new Atributos(String.class, i.Value.toString(), null); :}
-				| ID:i QUATROPONTOS PropertyCall DOISPONTOS TypeSpecifier {: RESULT = new Atributos(String.class, i.Value.toString(), null); :};
+OperationContext ::= ID:i QUATROPONTOS PropertyCall:p
+					{: 
+						RESULT = new Atributos(String.class, i.Value.toString() + "::" + p.Value.toString(), null); 
+					:}
+					| ID:i QUATROPONTOS PropertyCall:p DOISPONTOS TypeSpecifier:t 
+					{: 
+						RESULT = new Atributos(String.class, i.Value.toString() + "::" + p.Value.toString() + ":" + t.Value.toString(), null); 
+					:};
 				
 ClassifierContext ::= ID:i DOISPONTOS ID {:
 					if (!XmiParser.isValidClass(i.Value.toString())){
@@ -500,27 +542,31 @@ CollectionParameters ::= PropertyCall:p {: RESULT = p; :}
 
 //Tipos
 
-TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,null,p.Code);:}
-		| INTTYPE{: RESULT = new Atributos(null,null,"int");:} 
-		| REALTYPE{: RESULT = new Atributos(null,null,"double");:} 
-		| VOID{: RESULT = new Atributos(null,null,"void");:} 
-		| STRING{: RESULT = new Atributos(null,null,"string");:}
-		| BOOLEAN{: RESULT = new Atributos(null,null,"boolean");:} ;
+TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,p.Value,p.Code);:}
+		| INTTYPE{: RESULT = new Atributos(null,"int","int");:} 
+		| REALTYPE{: RESULT = new Atributos(null,"double","double");:} 
+		| VOID{: RESULT = new Atributos(null,"void","void");:} 
+		| STRING{: RESULT = new Atributos(null,"string","string");:}
+		| BOOLEAN{: RESULT = new Atributos(null,"boolean","boolean");:} ;
 		
 //Literais
 
 PropertyCall ::= RESULT {: RESULT = new Atributos(null,null,"result");:}
 				| PathName:p {: RESULT = p;:}
-				| PathName:p LPAREN RPAREN {: RESULT = new Atributos(null,null,p.Code + "()");:}
-				| PathName:p LPAREN FormalParameters:fp RPAREN {: RESULT = new Atributos(null,null,p.Code + " (" + fp.Code + ")");:}
-				| PathName:p PONTO PropertyCall:p2 {: RESULT = new Atributos(null,null,p.Code + "." + p2.Code);:};
+				| PathName:p LPAREN RPAREN {: RESULT = new Atributos(null,p.Value + "()",p.Code + "()");:}
+				| PathName:p LPAREN FormalParameters:fp RPAREN 
+				{: 
+					RESULT = new Atributos(null,p.Value + "(" + fp.Value + ")",p.Code + " (" + fp.Code + ")");
+					formalParameters = fp.Code.toString();
+				:}
+				| PathName:p PONTO PropertyCall:p2 {: RESULT = new Atributos(null,p.Value + "." + p2.Value,p.Code + "." + p2.Code);:};
 				
 				
-FormalParameters ::= FormalParameters:f VIRGULA FormalParameter:f2 {: RESULT = new Atributos(null,null, f.Code + "," + f2.Code);:}
-				|FormalParameter:f {: RESULT = new Atributos(null,null,f.Code);:};	
+FormalParameters ::= FormalParameters:f VIRGULA FormalParameter:f2 {:  RESULT = new Atributos(null,f.Value + "," + f2.Value, f.Code + "," + f2.Code);:}
+				|FormalParameter:f {: RESULT = new Atributos(null,f.Value,f.Code);:};	
 							
-FormalParameter ::= ID:i DOISPONTOS TypeSpecifier:t {: RESULT = new Atributos(null,null,t.Code + " " + i.Code );:}
-				|PropertyCall:p {: RESULT = new Atributos(null,null,p.Code);:};
+FormalParameter ::= ID:i DOISPONTOS TypeSpecifier:t {: RESULT = new Atributos(null,i.Value + ":" + t.Value,t.Code + " " + i.Value.toString() );:}
+				|PropertyCall:p {: RESULT = new Atributos(null,p.Value,p.Code);:};
 				
 PathName ::= ID:i 
 			{: 
@@ -536,6 +582,7 @@ PathName ::= ID:i
 					if( XmiParser.isValidPath(currentContext, p.Value.toString()) ) {
 						RESULT = new Atributos(XmiParser.getType(currentContext, p.Value.toString()), p.Value, "this." + p.Code);
 					} else {
+						System.out.println(currentContext + " " + i.Value + " " + p.Value);
 						System.err.println("Erro de compilação: propriedade inexistente no contexto");
 						System.exit(0);
 					} 
