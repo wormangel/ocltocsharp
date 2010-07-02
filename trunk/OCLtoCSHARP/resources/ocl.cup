@@ -29,6 +29,7 @@ action code {:
 			private String fullContext;
 			private String formalParameters = "";
 			private boolean isResult;
+			private boolean semantic = false;
 			
 			private String getClassContext(String fullContext) {
 				int index = fullContext.indexOf("::");
@@ -215,16 +216,20 @@ OperationContext ::= ID:i QUATROPONTOS PropertyCall:p
 					:};
 				
 ClassifierContext ::= ID:i DOISPONTOS ID {:
-					if (!XmiParser.isValidClass(i.Value.toString())){
-						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i.Value.toString() + " DEFINIDA NO XMI1");
-						System.exit(0);
+					if(semantic) {
+						if (!XmiParser.isValidClass(i.Value.toString())){
+							System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i.Value.toString() + " DEFINIDA NO XMI1");
+							System.exit(0);
+						}
 					}
 					RESULT = new Atributos(String.class, i.Value.toString(), null);
 				:} 
 				| ID:i {: 
-					if (!XmiParser.isValidClass(i.Value.toString())){
-						System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i.Value.toString() + " DEFINIDA NO XMIz");
-						System.exit(0);
+					if(semantic) {
+						if (!XmiParser.isValidClass(i.Value.toString())){
+							System.err.println("\n\nERRO DE COMPILACAO, NAO EXISTE CLASSE " + i.Value.toString() + " DEFINIDA NO XMIz");
+							System.exit(0);
+						}	
 					}
 					RESULT = new Atributos(String.class, i.Value.toString(), null);
 					:};
@@ -236,9 +241,11 @@ OCLExpression ::= LogicalExpression: e {: RESULT = e; :};
 LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 				| RelationalExpression:e1 LogicalOperator:o LogicalExpression:e2 
 				{:	
-					if(e1.Type != Boolean.class || e2.Type != Boolean.class){
-						System.err.println("\n\nERRO DE COMPILACAO LogicalExpression");
-						System.exit(0);
+					if (semantic) {
+						if(e1.Type != Boolean.class || e2.Type != Boolean.class){
+							System.err.println("\n\nERRO DE COMPILACAO LogicalExpression");
+							System.exit(0);
+						}
 					}
 					if(o.Value.equals("&&")){
 						RESULT = new Atributos(Boolean.class, new String(e1.Value + " && " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
@@ -252,7 +259,10 @@ LogicalExpression ::= RelationalExpression:e {: RESULT = e; :}
 				:};
 				
 RelationalExpression  ::= AdditiveExpression: e {: RESULT = e; :}
-				| AdditiveExpression:e1 RelationalOperator:o RelationalExpression:e2 {: RESULT = new Atributos(null,null,e1.Code + " " + o.Code +  " " +e2.Code); :};
+				| AdditiveExpression:e1 RelationalOperator:o RelationalExpression:e2 
+				{: 
+					RESULT = new Atributos(null,null,e1.Code + " " + o.Code +  " " +e2.Code); 
+				:};
 				
 AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 				| MultiplicativeExpression:e1 AddOperator:o AdditiveExpression:e2
@@ -272,8 +282,10 @@ AdditiveExpression ::= MultiplicativeExpression:e {: RESULT = e; :}
 							RESULT = new Atributos(Double.class, new String(e1.Value + " - " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 						}
 			   	} else {
-			   			System.err.println("\n\nERRO DE COMPILACAO AdditiveExpression");
-			   			System.exit(0);
+			   			if (semantic) {
+			   				System.err.println("\n\nERRO DE COMPILACAO AdditiveExpression");
+			   				System.exit(0);
+		   				}
 	   			}
 				:};
 				
@@ -295,8 +307,10 @@ MultiplicativeExpression ::= UnaryExpression:e {: RESULT = e; :}
 							RESULT = new Atributos(Double.class, new String(e1.Value + " / " + e2.Value), e1.Code + " " + o.Code + " " + e2.Code);
 						}
 			   	} else {
-			   			System.err.println("\n\nERRO DE COMPILACAO MultiplicativeExpression");
-			   			System.exit(0);
+			   			if (semantic) {
+			   				System.err.println("\n\nERRO DE COMPILACAO MultiplicativeExpression");
+			   				System.exit(0);
+		   				}
 	   			}
 				:};
 				
@@ -310,7 +324,7 @@ UnaryExpression ::= PrimaryExpression: e {: RESULT = new Atributos(e.Type,e.Valu
 								case SIZE : RESULT = new Atributos(Integer.class,null,e1.Code + e2.Code); break;
 								case FORALL : RESULT = new Atributos(Boolean.class,null,e2.Code + "(" + e1.Code + ")"); break;
 								case SELECT : RESULT = new Atributos(null,null,e2.Code + "(" + e1.Code + ")"); break;
-								case EXISTS : RESULT = new Atributos(null,null,e2.Code + "(" + e1.Code + ")"); break;
+								case EXISTS : RESULT = new Atributos(Boolean.class,null,e2.Code + "(" + e1.Code + ")"); break;
 								default : RESULT = new Atributos(e2.Type,null,e1.Code + e2.Code);
 								}
 							
@@ -644,9 +658,10 @@ PathName ::= ID:i
 					if( XmiParser.isValidPath(currentContext, p.Value.toString()) ) {
 						RESULT = new Atributos(XmiParser.getType(currentContext, p.Value.toString()), p.Value, "this." + p.Code);
 					} else {
-						System.out.println(currentContext + " " + i.Value + " " + p.Value);
-						System.err.println("Erro de compilação: propriedade inexistente no contexto");
-						System.exit(0);
+						if (semantic) {
+							System.err.println("Erro de compilação: propriedade inexistente no contexto");
+							System.exit(0);
+						}
 					} 
 				} else { 
 					RESULT = new Atributos(null,null,i.Value.toString() + "." + p.Code);
