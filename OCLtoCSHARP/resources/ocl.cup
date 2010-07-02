@@ -27,7 +27,8 @@ action code {:
 			private void GenAuxMethod(String code) { System.out.println(code);}
 			private String currentContext;
 			private String fullContext;
-			private String formalParameters;
+			private String formalParameters = "";
+			private boolean isResult;
 			
 			private String getClassContext(String fullContext) {
 				int index = fullContext.indexOf("::");
@@ -40,9 +41,24 @@ action code {:
 				return fullContext.substring(index1+2,index2);
 			}
 			
-			private String getParamNames(){
+			private String getFormalParameters(boolean includeResult) {
+				if (includeResult) {
+					if(formalParameters.equals("")) {
+						return formalParameters + "object result";
+					} else {
+						return formalParameters + ",object result";
+					}
+				} else {
+					return formalParameters;
+				}
+			}
+			
+			private String getParamNames(boolean includeResult){
 				String names = "";
-				String[] semVirgulas = formalParameters.split(",");
+				String params = getFormalParameters(includeResult);
+				if (params.equals(""))
+					return "";
+				String[] semVirgulas = params.split(",");
 				for(String s : semVirgulas){
 					String[] semEspacos = s.split(" ");
 					names += semEspacos[1] + ",";
@@ -51,7 +67,7 @@ action code {:
 					names = names.substring(0,names.length()-1);
 				return names;
 			}
-
+			
 			:};
 
 init with {: 
@@ -108,7 +124,7 @@ OCLFile ::= PACKAGE ID OCLConstraints ENDPACKAGE
 				
 OCLConstraints ::= Constraint OCLConstraints | Constraint;
 
-Constraint ::= ContextDeclaration ContextBody {: currentContext = null; fullContext = null; formalParameters = null; :};
+Constraint ::= ContextDeclaration ContextBody {: currentContext = null; fullContext = null; formalParameters = null; isResult = false; :};
 
 ContextDeclaration ::= CONTEXT OperationContext:c {: currentContext = getClassContext((String)c.Value); fullContext = (String)c.Value; :}
 				| CONTEXT ClassifierContext:c {: currentContext = (String)c.Value; :};
@@ -122,41 +138,71 @@ InvExpression ::= INV DOISPONTOS OCLExpression:e
 
 PreExpression ::= PRE DOISPONTOS OCLExpression:e 
 				  	{:
-				  		RESULT =  new Atributos(null,null, "private void " + getPreName() + "(" + formalParameters + ") { " + 
+				  		RESULT =  new Atributos(null,null, "private void " + getPreName() + "(" + getFormalParameters(false) + ") { " + 
 				  			"if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }"); 
 			  	  	:}
 				| PRE ID:i DOISPONTOS OCLExpression:e 
 					{:
-						RESULT = new Atributos(null,null, "private void CheckPre" +i.Value.toString() + "(" + formalParameters + ") { " + 
+						RESULT = new Atributos(null,null, "private void CheckPre" +i.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
 							"if (!(" + e.Code + ")) throw new Exception(\"Pre violada\");" + " }"); 
 					:}
 				| POS DOISPONTOS OCLExpression:e 
 				  	{:
-				  		RESULT = new Atributos(null,null, "private void " +getPosName() + "(" + formalParameters + ") { " + 
-				  		"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"); 
+				  		if(isResult){
+				  			RESULT = new Atributos(null,null, "private void " +getPosName() + "(" + getFormalParameters(true) + ") { " + 
+				  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }" +
+				  				"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") {" + 
+				  				"object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() +
+				  				"(" + getParamNames(true) + ");" + " }"	); 
+				  		} else {
+				  			RESULT = new Atributos(null,null, "private void " +getPosName() + "(" + getFormalParameters(false) + ") { " + 
+				  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"); 
+				  		}
 			  		:}
 				| POS ID:i DOISPONTOS OCLExpression:e 
 				  	{:
-				  		RESULT = new Atributos(null,null, "private void CheckPos" + i.Value.toString() + "(" + formalParameters + ") { " + 
-				  			"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"); 
+				  		if(isResult){
+				  			RESULT = new Atributos(null,null, "private void CheckPos" + i.Value.toString() + "(" + getFormalParameters(true) + ") { " + 
+				  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }" + 
+				  				"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") {" + 
+				  				"object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i.Value.toString() + 
+				  				"(" + getParamNames(true) + ");" + " }"	);
+				  		} else {
+				  			RESULT = new Atributos(null,null, "private void CheckPos" + i.Value.toString() + "(" + formalParameters + ") { " + 
+				  				"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }");
+		  				} 
 		  			:}
 				| PRE DOISPONTOS OCLExpression:e1 POS DOISPONTOS OCLExpression:e2 
 				  {:
-				  	RESULT = new Atributos(null,null, "private void " +getPreName() + "(" +  formalParameters + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
-						+"private void " + getPosName() + "(" + formalParameters + ") { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }"
-						+"private void " + getOperationName(fullContext) + "Checked" + "(" + formalParameters + ") { " + lastPreName() + 
-						"(" + getParamNames() +  ");" + getOperationName(fullContext) + "(" + getParamNames() + ");" + lastPosName() + "(" + getParamNames() + ");" + " }"  );
-					 
+				  	if(isResult){
+				  	RESULT = new Atributos(null,null, "private void " +getPreName() + "(" +  getFormalParameters(false) + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
+						+"private void " + getPosName() + "(" + getFormalParameters(true) + ") { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }"
+						+"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + lastPreName() + 
+						"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() + "(" + getParamNames(true) + ");" + " }"  );
+					} else {
+						RESULT = new Atributos(null,null, "private void " +getPreName() + "(" +  getFormalParameters(false) + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
+						+"private void " + getPosName() + "(" + getFormalParameters(false) + ") { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }"
+						+"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + lastPreName() + 
+						"(" + getParamNames(false) +  ");" + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + lastPosName() + "(" + getParamNames(false) + ");" + " }"  );
+					}					 
 				  :}
 				| PRE ID:i1 DOISPONTOS OCLExpression:e1 POS ID:i2 DOISPONTOS OCLExpression:e2
 				  {: 
-				  	RESULT = new Atributos(null,null, "private void CheckPre" + i1.Value.toString() + "(" + formalParameters + ") { " + 
-				  		"if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }" +
-						"private void CheckPos" + i2.Value.toString() + "(" + formalParameters + ") { " + 
-						"if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" +
-						"private void " + getOperationName(fullContext) + "Checked" + "(" + formalParameters + ") { " + "CheckPre" + i1.Value.toString() + 
-						"(" + getParamNames() +  ");" + getOperationName(fullContext) + "(" + getParamNames() + ");" + "CheckPos" + i2.Value.toString() + "(" + getParamNames() + ");" + " }"  );
-					
+				  	if(isResult){
+					  	RESULT = new Atributos(null,null, "private void CheckPre" + i1.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+					  		"if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }" +
+							"private void CheckPos" + i2.Value.toString() + "(" + getFormalParameters(true) + ") { " + 
+							"if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" +
+							"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + "CheckPre" + i1.Value.toString() + 
+							"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i2.Value.toString() + "(" + getParamNames(true) + ");" + " }"  );
+					} else {
+						RESULT = new Atributos(null,null, "private void CheckPre" + i1.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+					  		"if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }" +
+							"private void CheckPos" + i2.Value.toString() + "(" + getFormalParameters(false) + ") { " + 
+							"if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" +
+							"private void " + getOperationName(fullContext) + "Checked" + "(" + getFormalParameters(false) + ") { " + "CheckPre" + i1.Value.toString() + 
+							"(" + getParamNames(false) +  ");" + "object result = " + getOperationName(fullContext) + "(" + getParamNames(false) + ");" + "CheckPos" + i2.Value.toString() + "(" + getParamNames(false) + ");" + " }"  );
+					}
 				  :};
 
 OperationContext ::= ID:i QUATROPONTOS PropertyCall:p
@@ -567,7 +613,7 @@ TypeSpecifier ::= PathName:p {: RESULT = new Atributos(null,p.Value,p.Code);:}
 		
 //Literais
 
-PropertyCall ::= RESULT {: RESULT = new Atributos(null,null,"result");:}
+PropertyCall ::= RESULT {: isResult = true; RESULT = new Atributos(null,"result","result");:}
 				| PathName:p {: RESULT = p;:}
 				| PathName:p LPAREN RPAREN {: RESULT = new Atributos(null,p.Value + "()",p.Code + "()");:}
 				| PathName:p LPAREN FormalParameters:fp RPAREN 
