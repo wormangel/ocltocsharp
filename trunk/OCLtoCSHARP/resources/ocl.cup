@@ -42,7 +42,7 @@ action code {:
 			
 			private String getParamNames(){
 				String names = "";
-				String[] semVirgulas = fullContext.split(",");
+				String[] semVirgulas = formalParameters.split(",");
 				for(String s : semVirgulas){
 					String[] semEspacos = s.split(" ");
 					names += semEspacos[1] + ",";
@@ -121,13 +121,25 @@ InvExpression ::= INV DOISPONTOS OCLExpression:e
 				| INV ID:i DOISPONTOS OCLExpression:e {: RESULT = new Atributos(null,null, "private void checkInv" + i.Value.toString()+ "() { " + "if (!(" + e.Code +"))  throw new Exception(\"Inv violada\");" + " }"); :};
 
 PreExpression ::= PRE DOISPONTOS OCLExpression:e 
-				  {:RESULT =  new Atributos(null,null, "private void " +getPreName() + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }"); :}
+				  	{:
+				  		RESULT =  new Atributos(null,null, "private void " + getPreName() + "(" + formalParameters + ") { " + 
+				  			"if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }"); 
+			  	  	:}
 				| PRE ID:i DOISPONTOS OCLExpression:e 
-				  {:RESULT = new Atributos(null,null, "private void CheckPre" +i.Code + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pre violada\");" + " }"); :}
+					{:
+						RESULT = new Atributos(null,null, "private void CheckPre" +i.Value.toString() + "(" + formalParameters + ") { " + 
+							"if (!(" + e.Code + ")) throw new Exception(\"Pre violada\");" + " }"); 
+					:}
 				| POS DOISPONTOS OCLExpression:e 
-				  {:RESULT = new Atributos(null,null, "private void " +getPosName() + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"); :}
+				  	{:
+				  		RESULT = new Atributos(null,null, "private void " +getPosName() + "(" + formalParameters + ") { " + 
+				  		"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"); 
+			  		:}
 				| POS ID:i DOISPONTOS OCLExpression:e 
-				  {:RESULT = new Atributos(null,null, "private void CheckPos" + i.Code + "() { " + "if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"); :}
+				  	{:
+				  		RESULT = new Atributos(null,null, "private void CheckPos" + i.Value.toString() + "(" + formalParameters + ") { " + 
+				  			"if (!(" + e.Code +")) throw new Exception(\"Pos violada\");" + " }"); 
+		  			:}
 				| PRE DOISPONTOS OCLExpression:e1 POS DOISPONTOS OCLExpression:e2 
 				  {:
 				  	RESULT = new Atributos(null,null, "private void " +getPreName() + "(" +  formalParameters + ") { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
@@ -138,8 +150,12 @@ PreExpression ::= PRE DOISPONTOS OCLExpression:e
 				  :}
 				| PRE ID:i1 DOISPONTOS OCLExpression:e1 POS ID:i2 DOISPONTOS OCLExpression:e2
 				  {: 
-				  	RESULT = new Atributos(null,null, "private void CheckPre" + i1.Code + "() { " + "if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }"
-						+"private void CheckPos" + i2.Code + "() { " + "if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" ); 
+				  	RESULT = new Atributos(null,null, "private void CheckPre" + i1.Value.toString() + "(" + formalParameters + ") { " + 
+				  		"if (!(" + e1.Code +")) throw new Exception(\"Pre violada\");" + " }" +
+						"private void CheckPos" + i2.Value.toString() + "(" + formalParameters + ") { " + 
+						"if (!(" + e2.Code +")) throw new Exception(\"Pos violada\");" + " }" +
+						"private void " + getOperationName(fullContext) + "Checked" + "(" + formalParameters + ") { " + "CheckPre" + i1.Value.toString() + 
+						"(" + getParamNames() +  ");" + getOperationName(fullContext) + "(" + getParamNames() + ");" + "CheckPos" + i2.Value.toString() + "(" + getParamNames() + ");" + " }"  );
 					
 				  :};
 
