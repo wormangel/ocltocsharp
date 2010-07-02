@@ -4,7 +4,7 @@ context Cliente
 inv: age >= 18 and name = 'David' -- Cliente deve se chamar David e ser maior de idade
 
 context Membership
-inv: program.serviceLevel->includes( actualLevel 
+inv: program.serviceLevel->includes( actualLevel )
 
 context Cliente inv: 9 * 2 <= 18
 context Cliente inv: -18 <= 18

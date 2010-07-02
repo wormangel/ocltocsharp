@@ -1,3 +1,30 @@
-context Cliente::idade(a : int, b : int) : int
-pre : a < b
-pos : a > b 
+
+context Cliente::idade(a : int) : void
+pre : self.idade = 0 
+pos : self.idade = a
+
+context Cliente::idade(a : int) : void
+pre : a>0 
+
+context Cliente
+inv: self.idade() > 0
+
+context Cliente
+inv: self.nome <> '' and self.nome <> null
+
+
+context ProgramaFidelidade 
+inv: self.clientes->size() > 0
+
+context Servico
+inv: pontosACreditar > pontosADebitar
+
+context Conta::creditar(pts : int) : void
+pre: pts > 0
+pos: pontos <= pts
+
+context Conta::debitar(pts: int) : void
+pre: pts < pontos
+pos: pontos >= pts
+
+
