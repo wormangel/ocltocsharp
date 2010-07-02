@@ -1,11 +1,3 @@
-<<<<<<< .mine
-context Conta::creditar(pts : int) : void
-pre: pts > 0
-pos: self.pontos > 0=======
-context ProgramaFidelidade::obtemServicos() : Set
-pos: result->size()>0
-
-context Conta::creditar(pts : int) : void
+context Conta::creditar(pts : int, teste : int) : void
 pre: pts > 0
 pos: self.pontos > 0
->>>>>>> .r40
